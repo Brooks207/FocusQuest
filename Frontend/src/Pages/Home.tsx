@@ -40,7 +40,7 @@ const Home: React.FC = () => {
 
         {/* Description (unchanged) */}
         <p className="text-lg text-gray-700 max-w-md">
-          Some Description Here
+          Turn your to-do list into an epic adventure. Complete tasks, level up, and conquer your goals — one quest at a time.
         </p>
 
         {/* Buttons (unchanged) */}
