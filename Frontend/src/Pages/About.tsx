@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import questPageImg from "../assets/QuestPage.png";
 const About: React.FC = () => {
     const navigate = useNavigate();
     return (
@@ -28,7 +29,7 @@ const About: React.FC = () => {
                     <div className="md:w-1/2">
                         {/* Image Place Holder */}
                         <img 
-                            src="src/assets/QuestPage.png" 
+                            src={questPageImg}
                             alt="A screenshot of the Quest Page"
                             className="rounded-xl shadow-2xl w-full h-auto"
                         />
