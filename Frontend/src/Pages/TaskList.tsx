@@ -232,12 +232,17 @@ const TaskList: React.FC = () => {
 
   // Delete a task
   const deleteTask = async (id: string) => {
+    if (!user) {
+      setError("Please sign in to delete tasks");
+      return;
+    }
     setError(null);
 
     const { error } = await supabase
       .from("taskitem")
       .delete()
-      .eq("id", id);
+      .eq("id", id)
+      .eq("user_id", user.id);
 
     if (error) {
       console.error("Error deleting task:", error);
