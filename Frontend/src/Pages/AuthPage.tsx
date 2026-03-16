@@ -114,12 +114,11 @@ const AuthPage: React.FC = () => {
 
       // insert starter profile row
       
-      const { error: pErr } = await supabase.from("profiles").insert({
-        id: user.id, // uuid PK
+      const { error: pErr } = await supabase.from("profiles").upsert({
+        id: user.id,
         name: displayName || email,
         level: 1,
-        // birthday and avatar are no longer collected at signup
-      });
+      }, { onConflict: "id" });
       
 
       if (pErr) {

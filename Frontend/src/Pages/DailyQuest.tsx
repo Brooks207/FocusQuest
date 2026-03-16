@@ -136,6 +136,7 @@ const QuestToggle: React.FC<{ q: Quest; onToggle?: (id: string) => void }>
 const DailyQuestPage: React.FC = () => {
   // XP fetched from database (displayed as x/100 for now)
   const [userXp, setUserXp] = useState<number>(0)
+  const [profileName, setProfileName] = useState<string>('Adventurer')
 
   // Fetch current user's XP
   const fetchCurrentXp = async () => {
@@ -145,6 +146,8 @@ const DailyQuestPage: React.FC = () => {
       const userId = data.user.id
       const xp = await getXp(userId)
       setUserXp(xp)
+      const { data: prof } = await supabase.from('profiles').select('name').eq('id', userId).single()
+      if (prof?.name) setProfileName(prof.name)
     } catch (e) {
       console.error('Failed to fetch current XP', (e as Error).message)
     }
@@ -551,7 +554,7 @@ const DailyQuestPage: React.FC = () => {
                 <span className="absolute -bottom-2 -right-2 px-2 py-0.5 text-xs rounded-full bg-emerald-600 text-white shadow">Lv {currentLevel}</span>
               </div>
               <div className="flex-1">
-                <div className="font-semibold text-gray-800 text-lg">Mark the Focused</div>
+                <div className="font-semibold text-gray-800 text-lg">{profileName}</div>
                 <div className="mt-3 grid grid-cols-3 gap-2">
                   <StatChip label="Attack" value={`${playerAttack}`} />
                   <StatChip label="Current HP" value={`${playerHP}/${playerMaxHP}`} />
