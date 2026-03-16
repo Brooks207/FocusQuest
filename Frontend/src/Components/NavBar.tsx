@@ -6,13 +6,21 @@ const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [currentUser, setCurrentUser] = useState<any | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
-  useEffect(() => {
   const loadUser = async () => {
     const { data } = await supabase.auth.getUser();
-    setCurrentUser(data?.user ?? null);
+    const user = data?.user ?? null;
+    setCurrentUser(user);
+    if (user) {
+      const { data: prof } = await supabase.from("profiles").select("avatar").eq("id", user.id).single();
+      setAvatarUrl(prof?.avatar ?? null);
+    } else {
+      setAvatarUrl(null);
+    }
   };
 
+  useEffect(() => {
   loadUser();
 
   const { data: listener } = supabase.auth.onAuthStateChange(
@@ -82,13 +90,13 @@ const Navbar: React.FC = () => {
             {/* Profile Avatar */}
             <button
               onClick={() => navigate("/profile")}
-              className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center hover:scale-105 transition-transform"
+              className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center hover:scale-105 transition-transform overflow-hidden"
             >
-              <img
-                src="https://assets.puzzlefactory.com/puzzle/254/191/original.webp"
-                alt="avatar"
-                className="w-10 h-10 rounded-full"
-              />
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="avatar" className="w-10 h-10 rounded-full object-cover" />
+              ) : (
+                <span className="text-xl">🧙‍♂️</span>
+              )}
             </button>
           </div>
         </div>

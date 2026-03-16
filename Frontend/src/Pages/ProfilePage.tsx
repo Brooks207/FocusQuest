@@ -4,10 +4,11 @@ import LogoutButton from "../Components/LogoutButton";
 import { supabase } from "../lib/supabaseClient";
 
 type ProfileRow = {
-  id: string;           
+  id: string;
   name?: string | null;
   level?: string | null;
   birthday?: string | null;
+  avatar?: string | null;
 };
 
 const Profile: React.FC = () => {
@@ -17,6 +18,7 @@ const Profile: React.FC = () => {
   const [authEmail, setAuthEmail] = useState<string>("");
   const [joinDateISO, setJoinDateISO] = useState<string>("");
   const [profile, setProfile] = useState<ProfileRow | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   // Load user and profile
   useEffect(() => {
@@ -40,7 +42,7 @@ const Profile: React.FC = () => {
       // Fetch profile row
       const { data: prof, error: profErr } = await supabase
         .from("profiles")
-        .select("id, name, level, birthday")
+        .select("id, name, level, birthday, avatar")
         .eq("id", user.id)
         .single();
 
@@ -71,10 +73,40 @@ const Profile: React.FC = () => {
     if (!user) return;
     const { data } = await supabase
       .from("profiles")
-      .select("id, name, level, birthday")
+      .select("id, name, level, birthday, avatar")
       .eq("id", user.id)
       .single();
     if (data) setProfile(data as ProfileRow);
+  }
+
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !profile) return;
+
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${profile.id}/avatar.${ext}`;
+
+      const { error: uploadErr } = await supabase.storage
+        .from("avatars")
+        .upload(path, file, { upsert: true });
+
+      if (uploadErr) { alert("Upload failed: " + uploadErr.message); return; }
+
+      const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
+
+      const { error: updateErr } = await supabase
+        .from("profiles")
+        .update({ avatar: publicUrl })
+        .eq("id", profile.id);
+
+      if (updateErr) { alert("Failed to save avatar: " + updateErr.message); return; }
+
+      await refreshProfile();
+    } finally {
+      setUploadingAvatar(false);
+    }
   }
   async function handleEditEmail() {
     const newEmail = window.prompt("Enter a new email:", authEmail);
@@ -147,7 +179,17 @@ const Profile: React.FC = () => {
             <div className="flex items-center justify-between mb-8">
               {/* Avatar + Info */}
               <div className="flex items-center space-x-4">
-                <div className="w-24 h-24 rounded-full bg-gray-300" />
+                <label className="relative w-24 h-24 rounded-full cursor-pointer group">
+                  {profile.avatar ? (
+                    <img src={profile.avatar} alt="avatar" className="w-24 h-24 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-24 h-24 rounded-full bg-gray-300 flex items-center justify-center text-3xl">🧙‍♂️</div>
+                  )}
+                  <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-semibold">
+                    {uploadingAvatar ? "Uploading…" : "Change"}
+                  </div>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+                </label>
                 <div>
                   <h2 className="text-2xl font-bold">{profile.name ?? "User Name"}</h2>
                   <p className="text-gray-600">{profile.level ?? "Level 1"}</p>
