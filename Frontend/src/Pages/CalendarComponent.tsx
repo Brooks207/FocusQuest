@@ -4,7 +4,6 @@ import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import '../styles/calendar-theme.css';
 import { supabase } from '../lib/supabaseClient';
-import { isDueOnDate } from '../lib/recurrence';
 
 const localizer = momentLocalizer(moment);
 

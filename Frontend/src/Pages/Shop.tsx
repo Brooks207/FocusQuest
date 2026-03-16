@@ -6,10 +6,7 @@ import { getCurrency } from "../lib/xp";
 const Shop: React.FC = () => {
   const navigate = useNavigate();
   const [gold, setGold] = useState<number | null>(null);
-  const [loadingGold, setLoadingGold] = useState(false);
-
   const fetchGold = async () => {
-    setLoadingGold(true);
     try {
       const { data, error } = await supabase.auth.getUser();
       if (error || !data?.user) {
@@ -22,8 +19,6 @@ const Shop: React.FC = () => {
     } catch (e) {
       console.error('Failed to fetch currency', e);
       setGold(0);
-    } finally {
-      setLoadingGold(false);
     }
   }
 
