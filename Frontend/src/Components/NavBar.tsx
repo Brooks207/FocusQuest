@@ -44,31 +44,33 @@ const Navbar: React.FC = () => {
     { name: "Sign In / Sign Up", path: "/auth"},
     { name: "About", path: "/about" },
   ]
-  const navClass = "fixed top-0 left-0 w-full z-50 glass border-b border-white/20 shadow-lg"
-
   if (currentUser) {
     return (
-      <nav className={navClass}>
-        <div className="w-full px-6 py-3 flex items-center">
+      <nav className="fixed top-0 left-0 w-full bg-white/80 backdrop-blur-sm shadow-sm z-50">
+  <div className="w-full px-6 py-3 flex items-center">
+          {/* Logo */}
           <span
             onClick={() => navigate("/")}
-            className="text-2xl font-bold text-white cursor-pointer mr-4 drop-shadow"
+            className="text-2xl font-bold text-amber-800 cursor-pointer mr-4"
           >
             FocusQuest
           </span>
 
+          {/* spacer to push content to the right */}
           <div className="flex-1" />
 
+          {/* Right-aligned links + controls */}
           <div className="flex items-center gap-4">
-            <div className="hidden md:flex gap-x-2 items-center">
+            {/* Links (hidden on small screens) */}
+            <div className="hidden md:flex gap-x-8 items-center">
               {loggedIn.map((link) => (
                 <button
                   key={link.name}
                   onClick={() => navigate(link.path)}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  className={`text-lg font-medium transition-all ${
                     location.pathname === link.path
-                      ? "bg-white/25 text-white border border-white/40"
-                      : "text-white/75 hover:text-white hover:bg-white/15"
+                      ? "text-amber-800 underline underline-offset-4"
+                      : "text-gray-700 hover:text-amber-800"
                   }`}
                 >
                   {link.name}
@@ -76,16 +78,18 @@ const Navbar: React.FC = () => {
               ))}
             </div>
 
+            {/* Mobile Menu Button */}
             <button
-              className="md:hidden text-white font-bold text-xl"
+              className="md:hidden text-amber-900 font-bold text-xl"
               onClick={() => alert("Open menu (to implement later!)")}
             >
               ☰
             </button>
 
+            {/* Profile Avatar */}
             <button
               onClick={() => navigate("/profile")}
-              className="w-10 h-10 rounded-full glass-btn flex items-center justify-center overflow-hidden shadow-lg"
+              className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center hover:scale-105 transition-transform overflow-hidden"
             >
               {avatarUrl ? (
                 <img src={avatarUrl} alt="avatar" className="w-10 h-10 rounded-full object-cover" />
@@ -99,27 +103,30 @@ const Navbar: React.FC = () => {
     );
   } else {
     return (
-      <nav className={navClass}>
-        <div className="w-full px-6 py-3 flex items-center">
+      <nav className="fixed top-0 left-0 w-full bg-white/80 backdrop-blur-sm shadow-sm z-50">
+  <div className="w-full px-6 py-3 flex items-center">
+          {/* Logo */}
           <span
             onClick={() => navigate("/")}
-            className="text-2xl font-bold text-white cursor-pointer mr-4 drop-shadow"
+            className="text-2xl font-bold text-amber-800 cursor-pointer mr-4"
           >
             FocusQuest
           </span>
 
+          {/* spacer to push content to the right */}
           <div className="flex-1" />
 
-          <div className="flex items-center gap-2">
-            <div className="hidden md:flex gap-x-2 items-center">
+          {/* Right-aligned links + controls (logged-out) */}
+          <div className="flex items-center gap-4">
+            <div className="hidden md:flex gap-x-8 items-center">
               {loggedOut.map((link) => (
                 <button
                   key={link.name}
                   onClick={() => navigate(link.path)}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  className={`text-lg font-medium transition-all ${
                     location.pathname === link.path
-                      ? "bg-white/25 text-white border border-white/40"
-                      : "text-white/75 hover:text-white hover:bg-white/15"
+                      ? "text-amber-800 underline underline-offset-4"
+                      : "text-gray-700 hover:text-amber-800"
                   }`}
                 >
                   {link.name}
@@ -127,8 +134,9 @@ const Navbar: React.FC = () => {
               ))}
             </div>
 
+            {/* Mobile Menu Button */}
             <button
-              className="md:hidden text-white font-bold text-xl"
+              className="md:hidden text-amber-900 font-bold text-xl"
               onClick={() => alert("Open menu (to implement later!)")}
             >
               ☰

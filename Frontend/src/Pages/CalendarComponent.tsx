@@ -93,18 +93,17 @@ export default function CalendarComponent() {
   }
 
   return (
-    <section className="min-h-screen w-full bg-gradient-to-br from-violet-600 via-purple-800 to-indigo-900 py-16 px-4">
-      <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-indigo-400/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="container mx-auto max-w-5xl glass rounded-3xl p-8 shadow-2xl relative">
+    <section className="min-h-screen w-full bg-gradient-to-br from-green-200 to-amber-400 py-16 px-4">
+      <div className="container mx-auto max-w-5xl bg-white/70 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-2xl font-semibold text-white">Calendar</h1>
+          <h1 className="text-2xl font-semibold">Calendar</h1>
           <div className="flex gap-2">
-            <button onClick={fetchEvents} className="glass-btn text-white px-3 py-1 rounded-lg text-sm font-medium">↺ Refresh</button>
-            <button onClick={deleteAllTasks} className="bg-rose-500/20 border border-rose-400/30 text-rose-200 hover:bg-rose-500/30 transition px-3 py-1 rounded-lg text-sm font-medium">🗑 Delete All</button>
+            <button onClick={fetchEvents} className="px-3 py-1 rounded-lg bg-amber-100 text-amber-900 hover:bg-amber-200 text-sm font-medium">↺ Refresh</button>
+            <button onClick={deleteAllTasks} className="px-3 py-1 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium">🗑 Delete All</button>
           </div>
         </div>
         <div className="flex items-center gap-2 text-sm mb-4">
-          <span className="text-sm text-white/60">Legend:</span>
+          <span className="text-sm text-gray-600">Legend:</span>
           <span className="px-2 py-1 rounded text-white" style={{ backgroundColor: DIFFICULTY_COLORS[1] }}>Easy</span>
           <span className="px-2 py-1 rounded text-white" style={{ backgroundColor: DIFFICULTY_COLORS[2] }}>Medium</span>
           <span className="px-2 py-1 rounded text-white" style={{ backgroundColor: DIFFICULTY_COLORS[3] }}>Hard</span>

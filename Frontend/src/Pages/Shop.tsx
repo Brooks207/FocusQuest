@@ -39,20 +39,25 @@ const Shop: React.FC = () => {
   ];
 
   return (
-    <section className="min-h-dvh w-full flex flex-col justify-start items-center text-center bg-gradient-to-br from-violet-600 via-purple-800 to-indigo-900 overflow-hidden pb-12">
-      <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-indigo-400/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="relative flex flex-col justify-start items-center gap-y-8 max-w-6xl w-full px-4 py-6">
-        <span className="text-[26px] font-bold text-white/80">FocusQuest</span>
+    <section className="min-h-dvh w-full flex flex-col justify-start items-center text-center bg-gradient-to-br from-green-200 to-amber-400 overflow-hidden pb-12">
+      <div className="flex flex-col justify-start items-center gap-y-8 max-w-6xl w-full px-4 py-6">
+        {/* Branding / Logo */}
+        <span className="text-[26px] font-bold text-gray-800">
+          FocusQuest
+        </span>
 
-        <h1 className="text-5xl text-white font-extrabold leading-tight drop-shadow">Item Shop</h1>
+        {/* Page Title */}
+        <h1 className="text-5xl text-gray-900 font-extrabold leading-tight">
+          Item Shop
+        </h1>
 
         {/* Gold Display */}
-        <div className="glass rounded-2xl px-8 py-4 shadow-xl">
+        <div className="bg-white rounded-2xl px-8 py-4 shadow-lg">
           <div className="flex items-center gap-3">
             <span className="text-3xl">💰</span>
             <div className="text-left">
-              <p className="text-sm text-white/60">Your Gold</p>
-              <p className="text-2xl font-bold text-amber-300">{gold}</p>
+              <p className="text-sm text-gray-600">Your Gold</p>
+              <p className="text-2xl font-bold text-amber-800">{gold}</p>
             </div>
           </div>
         </div>
@@ -63,24 +68,33 @@ const Shop: React.FC = () => {
             {shopItems.map((item) => (
               <div
                 key={item.id}
-                className="glass rounded-2xl p-6 shadow-xl transition-all hover:bg-white/20 flex flex-col items-center gap-3 relative"
+                className="bg-white rounded-2xl p-6 shadow-lg transition-all hover:shadow-xl flex flex-col items-center gap-3 relative"
               >
-                <div className="absolute top-2 right-2 bg-amber-400/30 text-amber-200 border border-amber-300/30 text-xs px-2 py-1 rounded-full font-semibold">
+                {/* Coming Soon Badge */}
+                <div className="absolute top-2 right-2 bg-amber-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
                   Coming Soon
                 </div>
 
+                {/* Item Icon */}
                 <div className="text-6xl">{item.icon}</div>
 
-                <h3 className="text-lg font-bold text-white">{item.name}</h3>
+                {/* Item Name */}
+                <h3 className="text-lg font-bold text-gray-800">
+                  {item.name}
+                </h3>
 
+                {/* Price */}
                 <div className="flex items-center gap-2">
                   <span className="text-xl">💰</span>
-                  <span className="text-lg font-semibold text-amber-300">{item.price}</span>
+                  <span className="text-lg font-semibold text-amber-700">
+                    {item.price}
+                  </span>
                 </div>
 
+                {/* Disabled Buy Button */}
                 <button
                   disabled
-                  className="w-full bg-white/10 text-white/40 border border-white/15 px-4 py-2 rounded-full text-sm font-semibold cursor-not-allowed"
+                  className="w-full bg-gray-300 text-gray-500 px-4 py-2 rounded-full text-sm font-semibold cursor-not-allowed opacity-60"
                 >
                   Purchase
                 </button>
@@ -89,12 +103,14 @@ const Shop: React.FC = () => {
           </div>
         </div>
 
+        {/* Navigation */}
         <button
           onClick={() => navigate("/")}
-          className="glass-btn text-white px-8 py-4 rounded-full text-xl font-semibold shadow-lg cursor-pointer"
+          className="bg-white text-amber-900 hover:bg-amber-800 hover:text-white transition-all px-8 py-4 rounded-full text-xl font-semibold shadow-lg cursor-pointer"
         >
           ← Back to Home
         </button>
+
       </div>
     </section>
   );

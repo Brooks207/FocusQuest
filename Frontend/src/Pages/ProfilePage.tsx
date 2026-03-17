@@ -155,34 +155,35 @@ const Profile: React.FC = () => {
   }
 
   return (
-    <section className="absolute inset-0 flex flex-col justify-center items-center bg-gradient-to-br from-violet-600 via-purple-800 to-indigo-900 overflow-hidden">
-      <div className="absolute top-1/4 left-1/3 w-80 h-80 bg-purple-400/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="glass rounded-3xl shadow-2xl p-10 w-full max-w-xl relative">
+    <section className="absolute inset-0 flex flex-col justify-center items-center bg-gradient-to-br from-green-200 to-amber-400 text-gray-800 overflow-hidden">
+      <div className="bg-white rounded-3xl shadow-xl p-10 w-full max-w-xl relative">
+        {/* Return button */}
         <div className="mb-6">
           <button
-            onClick={() => navigate("/")}
-            className="glass-btn text-white font-semibold px-5 py-2 rounded-full shadow-lg"
+            onClick={() => navigate("/tasks")}
+            className="font-semibold bg-gray-200 px-5 py-2 h-[40px] rounded-full text-l shadow-lg hover:bg-amber-800 hover:text-white transition-all"
           >
-            ← Back
+            ← Back to List
           </button>
         </div>
 
         {loading ? (
-          <div className="py-8 text-center text-white/60">Loading profile…</div>
+          <div className="py-8 text-center text-gray-600">Loading profile…</div>
         ) : !profile ? (
-          <div className="py-8 text-center text-rose-300">
+          <div className="py-8 text-center text-red-600">
             Profile not found. Try logging out and in again.
           </div>
         ) : (
           <>
             {/* Avatar + Gear */}
             <div className="flex items-center justify-between mb-8">
+              {/* Avatar + Info */}
               <div className="flex items-center space-x-4">
                 <label className="relative w-24 h-24 rounded-full cursor-pointer group">
                   {profile.avatar ? (
-                    <img src={profile.avatar} alt="avatar" className="w-24 h-24 rounded-full object-cover ring-2 ring-white/30" />
+                    <img src={profile.avatar} alt="avatar" className="w-24 h-24 rounded-full object-cover" />
                   ) : (
-                    <div className="w-24 h-24 rounded-full bg-white/15 border border-white/25 flex items-center justify-center text-3xl">🧙‍♂️</div>
+                    <div className="w-24 h-24 rounded-full bg-gray-300 flex items-center justify-center text-3xl">🧙‍♂️</div>
                   )}
                   <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-semibold">
                     {uploadingAvatar ? "Uploading…" : "Change"}
@@ -190,44 +191,76 @@ const Profile: React.FC = () => {
                   <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
                 </label>
                 <div>
-                  <h2 className="text-2xl font-bold text-white">{profile.name ?? "User Name"}</h2>
-                  <p className="text-white/60">{profile.level ?? "Level 1"}</p>
+                  <h2 className="text-2xl font-bold">{profile.name ?? "User Name"}</h2>
+                  <p className="text-gray-600">{profile.level ?? "Level 1"}</p>
                 </div>
               </div>
 
+              {/* View Gear */}
               <div
                 onClick={() => navigate("/equipment")}
-                className="glass-btn text-white px-5 py-3 rounded-xl cursor-pointer flex items-center justify-center text-base"
+                className="px-5 py-3 bg-amber-500 text-white rounded-lg shadow hover:bg-amber-600 transition cursor-pointer flex items-center justify-center text-base"
               >
                 ⚔️ View Gear
               </div>
             </div>
 
             {/* Info List */}
-            <div className="space-y-3">
-              {[
-                { label: "Email", value: authEmail || "—", onEdit: handleEditEmail },
-                { label: "Password", value: "••••••••", onEdit: handleEditPassword },
-                { label: "Birthday", value: profile.birthday ?? "Not set", onEdit: handleEditBirthday },
-              ].map(({ label, value, onEdit }) => (
-                <div key={label} className="flex justify-between items-center bg-white/10 rounded-xl px-4 py-3">
-                  <span className="font-semibold text-white/80 w-24">{label}</span>
-                  <span className="flex-1 text-center text-white/70 truncate">{value}</span>
-                  <button
-                    className="glass-btn text-white text-sm px-3 py-1 rounded-lg"
-                    onClick={onEdit}
-                  >
-                    Edit ✎
-                  </button>
-                </div>
-              ))}
-
-              <div className="flex justify-between items-center bg-white/10 rounded-xl px-4 py-3">
-                <span className="font-semibold text-white/80 w-24">Join Date</span>
-                <span className="flex-1 text-center text-white/70">{formatDateForUI(joinDateISO)}</span>
+            <div className="space-y-4">
+              {/* Email */}
+              <div className="flex justify-between items-center">
+                <span className="font-semibold bg-gray-200 px-4 py-2 rounded-lg w-32 text-center">
+                  Email
+                </span>
+                <span className="truncate max-w-[50%]">{authEmail || "—"}</span>
+                <button
+                  className="bg-gray-200 px-4 py-1 rounded-lg flex items-center gap-2 hover:bg-gray-300"
+                  onClick={handleEditEmail}
+                >
+                  Edit ✎
+                </button>
               </div>
 
-              <div className="flex justify-end pt-2">
+              {/* Password */}
+              <div className="flex justify-between items-center">
+                <span className="font-semibold bg-gray-200 px-4 py-2 rounded-lg w-32 text-center">
+                  Password
+                </span>
+                <span>********</span>
+                <button
+                  className="bg-gray-200 px-4 py-1 rounded-lg flex items-center gap-2 hover:bg-gray-300"
+                  onClick={handleEditPassword}
+                >
+                  Edit ✎
+                </button>
+              </div>
+
+              {/* Birthday */}
+              <div className="flex justify-between items-center">
+                <span className="font-semibold bg-gray-200 px-4 py-2 rounded-lg w-32 text-center">
+                  Birthday
+                </span>
+                <span>
+                  {profile.birthday
+                    ? profile.birthday
+                    : "Not set"}
+                </span>
+                <button
+                  className="bg-gray-200 px-4 py-1 rounded-lg flex items-center gap-2 hover:bg-gray-300"
+                  onClick={handleEditBirthday}
+                >
+                  Edit ✎
+                </button>
+              </div>
+
+              {/* Join Date */}
+              <div className="flex justify-between items-center">
+                <span className="font-semibold bg-gray-200 px-4 py-2 rounded-lg w-32 text-center">
+                  Join Date
+                </span>
+                <span>{formatDateForUI(joinDateISO)}</span>
+              </div>
+              <div className="flex justify-end">
                 <LogoutButton />
               </div>
             </div>
