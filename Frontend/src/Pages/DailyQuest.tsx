@@ -5,6 +5,7 @@ import NewTaskModal from '../Components/NewTaskModal';
 import { computeNextDue, isDueOnDate } from '../lib/recurrence'
 import { playDelete, playDeleteAll, playComplete, playAdd } from '../lib/sounds';
 import { getOrCreatePlayerStats, incrementEnemiesDefeated, setPlayerHp, setLastEnemyRound, setEnemyHp } from '../lib/game';
+import { getEquippedStats } from '../lib/shop';
 
 // --- Types ---
 interface Quest {
@@ -170,6 +171,13 @@ const DailyQuestPage: React.FC = () => {
 
   useEffect(() => {
     fetchCurrentXp()
+    ;(async () => {
+      const { data } = await supabase.auth.getUser()
+      if (data?.user) {
+        const bonuses = await getEquippedStats(data.user.id)
+        setEquippedBonuses(bonuses)
+      }
+    })()
   }, [])
 
   // Derived level/progress info
@@ -204,6 +212,7 @@ const DailyQuestPage: React.FC = () => {
   }
 
   const [playerHP, setPlayerHP] = useState<number>(100)
+  const [equippedBonuses, setEquippedBonuses] = useState({ attack_bonus: 0, defense_bonus: 0 })
   const [enemies, setEnemies] = useState<Enemy[]>([])
   const [enemyRound, setEnemyRound] = useState<number>(1)
   const [loot, setLoot] = useState<Array<{ type: string; amount?: number; name?: string }>>([])
@@ -290,8 +299,8 @@ const DailyQuestPage: React.FC = () => {
     enemiesRef.current = enemies
   }, [enemies])
 
-  // derive player attack and max HP from current level
-  const playerAttack = BASE_ATTACK + Math.max(0, currentLevel - 1) * ATTACK_PER_LEVEL
+  // derive player attack and max HP from current level + equipped gear
+  const playerAttack = BASE_ATTACK + Math.max(0, currentLevel - 1) * ATTACK_PER_LEVEL + equippedBonuses.attack_bonus
   const playerMaxHP = BASE_HP + Math.max(0, currentLevel - 1) * HP_PER_LEVEL
 
   // when level changes, scale current playerHP proportionally to the new max HP
@@ -441,7 +450,7 @@ const DailyQuestPage: React.FC = () => {
   // current enemy from state
   const currentEnemy = enemies[0]
   const enemyHP = currentEnemy ? currentEnemy.hp : Math.max(0, ENEMY_MAX_HP - totalDamage)
-  const defense = 0
+  const defense = equippedBonuses.defense_bonus
 
   // Handlers
   const toggleDaily = async (id: string) => {

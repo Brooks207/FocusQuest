@@ -1,116 +1,220 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { getCurrency } from "../lib/xp";
+import {
+  getOrCreateRotation, getRotationItems, getUserPurchasesInRotation, purchaseItem,
+  ShopItem, ShopRotation,
+} from "../lib/shop";
+
+function useCountdown(refreshesAt: string | null) {
+  const [timeLeft, setTimeLeft] = useState("");
+  useEffect(() => {
+    if (!refreshesAt) return;
+    const tick = () => {
+      const diff = new Date(refreshesAt).getTime() - Date.now();
+      if (diff <= 0) { setTimeLeft("Refreshing…"); return; }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setTimeLeft(`${h}h ${m}m ${s}s`);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [refreshesAt]);
+  return timeLeft;
+}
+
+const TYPE_COLORS: Record<string, string> = {
+  weapon: "bg-rose-100 text-rose-700",
+  armor: "bg-blue-100 text-blue-700",
+  consumable: "bg-emerald-100 text-emerald-700",
+};
 
 const Shop: React.FC = () => {
   const navigate = useNavigate();
-  const [gold, setGold] = useState<number | null>(null);
-  const fetchGold = async () => {
-    try {
-      const { data, error } = await supabase.auth.getUser();
-      if (error || !data?.user) {
-        setGold(0);
-        return;
-      }
-      const userId = data.user.id;
-      const balance = await getCurrency(userId);
-      setGold(balance);
-    } catch (e) {
-      console.error('Failed to fetch currency', e);
-      setGold(0);
-    }
-  }
+  const [gold, setGold] = useState<number>(0);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [rotation, setRotation] = useState<ShopRotation | null>(null);
+  const [items, setItems] = useState<ShopItem[]>([]);
+  const [purchased, setPurchased] = useState<number[]>([]); // item_ids bought this rotation
+  const [ownedEquipment, setOwnedEquipment] = useState<number[]>([]); // non-consumables already owned
+  const [loading, setLoading] = useState(true);
+  const [buying, setBuying] = useState<number | null>(null);
+  const [flash, setFlash] = useState<{ id: number; msg: string; ok: boolean } | null>(null);
 
-  useEffect(() => {
-    fetchGold();
+  const countdown = useCountdown(rotation?.refreshes_at ?? null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data } = await supabase.auth.getUser();
+      const uid = data?.user?.id ?? null;
+      setUserId(uid);
+
+      const [rot, balance] = await Promise.all([
+        getOrCreateRotation(),
+        uid ? getCurrency(uid) : Promise.resolve(0),
+      ]);
+      setRotation(rot);
+      setGold(balance);
+
+      const [rotItems, boughtIds] = await Promise.all([
+        getRotationItems(rot.item_ids),
+        uid ? getUserPurchasesInRotation(uid, rot.id) : Promise.resolve([]),
+      ]);
+      setItems(rotItems);
+      setPurchased(boughtIds);
+
+      // load owned non-consumable ids
+      if (uid) {
+        const { data: inv } = await supabase
+          .from('user_inventory')
+          .select('item_id, shop_items(type)')
+          .eq('user_id', uid);
+        const owned = (inv || [])
+          .filter((r: any) => r.shop_items?.type !== 'consumable')
+          .map((r: any) => r.item_id);
+        setOwnedEquipment(owned);
+      }
+    } catch (e) {
+      console.error('Shop load failed', e);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // Sample "coming soon" shop items
-  const shopItems = [
-    { id: 1, name: "Health Potion", icon: "🧪", price: 50 },
-    { id: 2, name: "Magic Sword", icon: "⚔️", price: 200 },
-    { id: 3, name: "Shield", icon: "🛡️", price: 150 },
-    { id: 4, name: "Spell Book", icon: "📖", price: 300 },
-    { id: 5, name: "Armor", icon: "🦺", price: 250 },
-    { id: 6, name: "Bow & Arrow", icon: "🏹", price: 180 },
-    { id: 7, name: "Magic Ring", icon: "💍", price: 400 },
-    { id: 8, name: "Staff", icon: "🪄", price: 350 },
-  ];
+  useEffect(() => { load(); }, [load]);
+
+  const handleBuy = async (item: ShopItem) => {
+    if (!userId || !rotation) return;
+    setBuying(item.id);
+    try {
+      const result = await purchaseItem(userId, item.id, rotation.id);
+      if (result.error) {
+        setFlash({ id: item.id, msg: result.error, ok: false });
+      } else {
+        setGold(result.new_currency ?? gold);
+        setPurchased(prev => [...prev, item.id]);
+        setFlash({ id: item.id, msg: "Purchased!", ok: true });
+        if (item.type !== 'consumable') setOwnedEquipment(prev => [...prev, item.id]);
+      }
+    } catch (e) {
+      setFlash({ id: item.id, msg: "Purchase failed", ok: false });
+    } finally {
+      setBuying(null);
+      setTimeout(() => setFlash(null), 2500);
+    }
+  };
+
+  const getItemState = (item: ShopItem): 'buy' | 'purchased' | 'owned' | 'broke' => {
+    if (purchased.includes(item.id)) return 'purchased';
+    if (item.type !== 'consumable' && ownedEquipment.includes(item.id)) return 'owned';
+    if (gold < item.price) return 'broke';
+    return 'buy';
+  };
 
   return (
-    <section className="min-h-dvh w-full flex flex-col justify-start items-center text-center bg-gradient-to-br from-green-200 to-amber-400 overflow-hidden pb-12">
-      <div className="flex flex-col justify-start items-center gap-y-8 max-w-6xl w-full px-4 py-6">
-        {/* Branding / Logo */}
-        <span className="text-[26px] font-bold text-gray-800">
-          FocusQuest
-        </span>
+    <section className="min-h-dvh w-full bg-gradient-to-br from-green-200 to-amber-400 pb-12">
+      <div className="max-w-2xl mx-auto px-4 pt-6 flex flex-col gap-5">
 
-        {/* Page Title */}
-        <h1 className="text-3xl sm:text-5xl text-gray-900 font-extrabold leading-tight">
-          Item Shop
-        </h1>
-
-        {/* Gold Display */}
-        <div className="bg-white rounded-2xl px-8 py-4 shadow-lg">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">💰</span>
-            <div className="text-left">
-              <p className="text-sm text-gray-600">Your Gold</p>
-              <p className="text-2xl font-bold text-amber-800">{gold}</p>
-            </div>
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-extrabold text-gray-900">Item Shop</h1>
+          <div className="bg-white rounded-2xl px-4 py-2 shadow flex items-center gap-2">
+            <span className="text-xl">💰</span>
+            <span className="text-lg font-bold text-amber-800">{gold}</span>
           </div>
         </div>
 
-        {/* Shop Items Grid */}
-        <div className="w-full max-w-4xl">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {shopItems.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white rounded-2xl p-6 shadow-lg transition-all hover:shadow-xl flex flex-col items-center gap-3 relative"
-              >
-                {/* Coming Soon Badge */}
-                <div className="absolute top-2 right-2 bg-amber-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
-                  Coming Soon
-                </div>
+        {/* Rotation timer */}
+        <div className="bg-white/70 backdrop-blur rounded-2xl px-4 py-3 flex items-center justify-between text-sm">
+          <span className="text-gray-600 font-medium">🔄 Shop refreshes in</span>
+          <span className="font-bold text-amber-800 tabular-nums">{countdown || "…"}</span>
+        </div>
 
-                {/* Item Icon */}
-                <div className="text-6xl">{item.icon}</div>
-
-                {/* Item Name */}
-                <h3 className="text-lg font-bold text-gray-800">
-                  {item.name}
-                </h3>
-
-                {/* Price */}
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">💰</span>
-                  <span className="text-lg font-semibold text-amber-700">
-                    {item.price}
-                  </span>
-                </div>
-
-                {/* Disabled Buy Button */}
-                <button
-                  disabled
-                  className="w-full bg-gray-300 text-gray-500 px-4 py-2 rounded-full text-sm font-semibold cursor-not-allowed opacity-60"
+        {/* Items grid */}
+        {loading ? (
+          <div className="text-center py-12 text-gray-600">Loading shop…</div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {items.map(item => {
+              const state = getItemState(item);
+              const isFlashing = flash?.id === item.id;
+              return (
+                <div
+                  key={item.id}
+                  className={`bg-white rounded-2xl p-4 shadow flex flex-col gap-2 relative transition-all ${
+                    state === 'purchased' || state === 'owned' ? 'opacity-60' : ''
+                  }`}
                 >
-                  Purchase
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
+                  {/* Type badge */}
+                  <span className={`absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${TYPE_COLORS[item.type] ?? ''}`}>
+                    {item.type}
+                  </span>
 
-        {/* Navigation */}
+                  <div className="text-4xl mt-1">{item.icon}</div>
+                  <div>
+                    <div className="font-bold text-gray-900 text-sm leading-tight">{item.name}</div>
+                    <div className="text-xs text-gray-500 mt-0.5">{item.description}</div>
+                  </div>
+
+                  <div className="flex items-center gap-1 mt-auto">
+                    <span className="text-base">💰</span>
+                    <span className="font-bold text-amber-700 text-sm">{item.price}</span>
+                  </div>
+
+                  {/* Flash message */}
+                  {isFlashing && (
+                    <div className={`text-xs font-semibold text-center py-1 rounded-lg ${flash!.ok ? 'text-emerald-700 bg-emerald-50' : 'text-red-700 bg-red-50'}`}>
+                      {flash!.msg}
+                    </div>
+                  )}
+
+                  {/* Buy button */}
+                  {state === 'purchased' && (
+                    <div className="w-full py-2 rounded-xl bg-gray-100 text-gray-400 text-xs font-semibold text-center">
+                      Purchased
+                    </div>
+                  )}
+                  {state === 'owned' && (
+                    <div className="w-full py-2 rounded-xl bg-gray-100 text-gray-400 text-xs font-semibold text-center">
+                      Owned
+                    </div>
+                  )}
+                  {(state === 'buy' || state === 'broke') && (
+                    <button
+                      onClick={() => handleBuy(item)}
+                      disabled={state === 'broke' || buying === item.id}
+                      className={`w-full py-2 rounded-xl text-xs font-semibold transition-all ${
+                        state === 'broke'
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-amber-500 text-white hover:bg-amber-600 active:bg-amber-700'
+                      }`}
+                    >
+                      {buying === item.id ? '…' : state === 'broke' ? 'Not enough gold' : 'Buy'}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Nav */}
+        <button
+          onClick={() => navigate("/equipment")}
+          className="w-full py-3 bg-white text-amber-900 font-semibold rounded-2xl shadow hover:bg-amber-50 transition text-sm"
+        >
+          🎒 View Inventory
+        </button>
         <button
           onClick={() => navigate("/")}
-          className="bg-white text-amber-900 hover:bg-amber-800 hover:text-white transition-all px-6 py-3 rounded-full text-base sm:text-xl font-semibold shadow-lg cursor-pointer w-full sm:w-auto"
+          className="w-full py-3 bg-white/60 text-amber-900 font-medium rounded-2xl text-sm hover:bg-white/80 transition"
         >
           ← Back to Home
         </button>
-
       </div>
     </section>
   );
