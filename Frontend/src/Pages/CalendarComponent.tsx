@@ -78,8 +78,8 @@ export default function CalendarComponent() {
 
         const mapped: MyEvent[] = dueRows.map((r: any) => {
           const raw = new Date(r.next_due)
-          // use UTC components from the ISO string so a stored midnight UTC maps to the intended date
-          const start = new Date(raw.getUTCFullYear(), raw.getUTCMonth(), raw.getUTCDate())
+          // next_due is stored as local midnight → use local date components to get the intended date
+          const start = new Date(raw.getFullYear(), raw.getMonth(), raw.getDate())
           const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1)
           const titleParts = [r.name]
           if (r.xp) titleParts.push(`+${r.xp} XP`)
