@@ -72,10 +72,17 @@ const MonsterBattle: React.FC<{
   const pct = Math.max(0, Math.min(100, (hp / maxHP) * 100));
 
   // delay transition so HP bar doesn't animate from 0% on mount/remount
+  // two nested RAFs ensure the browser has painted the initial width before enabling the transition
   const [barReady, setBarReady] = useState(false);
   useEffect(() => {
-    const id = requestAnimationFrame(() => setBarReady(true));
-    return () => cancelAnimationFrame(id);
+    let id2: number | undefined;
+    const id1 = requestAnimationFrame(() => {
+      id2 = requestAnimationFrame(() => setBarReady(true));
+    });
+    return () => {
+      cancelAnimationFrame(id1);
+      if (id2 !== undefined) cancelAnimationFrame(id2);
+    };
   }, []);
 
   // animation phase: idle → playerAttack (player lunges + enemy shakes) → enemyAttack (enemy lunges + player shakes)
