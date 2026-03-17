@@ -544,10 +544,19 @@ const DailyQuestPage: React.FC = () => {
     const { data: userData } = await supabase.auth.getUser()
     const userId = userData?.user?.id
     if (!userId) return
-    // remove completion records first (foreign key constraint)
     await supabase.from('task_completions').delete().eq('task_id', id)
     const { error } = await supabase.from('taskitem').delete().eq('id', id).eq('user_id', userId)
     if (!error) setTasks(prev => prev.filter(t => t.id !== id))
+  }
+
+  const handleDeleteAllTasks = async () => {
+    if (!window.confirm('Delete ALL tasks? This cannot be undone.')) return
+    const { data: userData } = await supabase.auth.getUser()
+    const userId = userData?.user?.id
+    if (!userId) return
+    await supabase.from('task_completions').delete().eq('user_id', userId)
+    await supabase.from('taskitem').delete().eq('user_id', userId)
+    setTasks([])
   }
   
 
@@ -616,7 +625,11 @@ const DailyQuestPage: React.FC = () => {
           <Card className="md:col-span-2">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl md:text-2xl font-bold text-gray-800">Daily Quests</h2>
-              <button onClick={() => setShowNewTask(true)} className="px-3 py-1 rounded bg-emerald-600 text-white text-sm">+ Add Task</button>
+              <div className="flex gap-2">
+                <button onClick={fetchTasks} className="px-3 py-1 rounded bg-amber-100 text-amber-900 hover:bg-amber-200 text-sm">↺ Refresh</button>
+                <button onClick={handleDeleteAllTasks} className="px-3 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200 text-sm">🗑 Delete All</button>
+                <button onClick={() => setShowNewTask(true)} className="px-3 py-1 rounded bg-emerald-600 text-white text-sm">+ Add Task</button>
+              </div>
             </div>
 
             <div className="space-y-3">

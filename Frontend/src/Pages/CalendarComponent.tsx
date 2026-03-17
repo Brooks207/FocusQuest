@@ -11,6 +11,7 @@ type MyEvent = { title: string; start: Date; end: Date; allDay?: boolean; origin
 
 export default function CalendarComponent() {
   const [events, setEvents] = useState<MyEvent[]>([])
+  const [userId, setUserId] = useState<string | null>(null)
 
   const DIFFICULTY_COLORS: Record<number, string> = {
     1: '#10B981', // green
@@ -42,59 +43,52 @@ export default function CalendarComponent() {
     allDay: true,
   }
 
+  const fetchEvents = async () => {
+    try {
+      const { data } = await supabase.auth.getUser()
+      const user = data?.user
+      if (!user) { setEvents([demoEvent]); return }
+      setUserId(user.id)
+
+      const { data: rows, error } = await supabase
+        .from('taskitem')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('active', true)
+        .order('next_due', { ascending: true })
+
+      if (error) throw error
+
+      const dueRows = (rows || []).filter((r: any) => !!r.next_due)
+      if (!dueRows.length) { setEvents([demoEvent]); return }
+
+      const mapped: MyEvent[] = dueRows.map((r: any) => {
+        const raw = new Date(r.next_due)
+        const start = new Date(raw.getFullYear(), raw.getMonth(), raw.getDate())
+        const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1)
+        const titleParts = [r.name]
+        if (r.xp) titleParts.push(`+${r.xp} XP`)
+        if (r.recurrence) titleParts.push('(repeats)')
+        return { title: titleParts.join(' '), start, end, allDay: true, original: r }
+      })
+
+      setEvents(mapped)
+    } catch (e) {
+      console.error('Failed to load calendar tasks', e)
+      setEvents([demoEvent])
+    }
+  }
+
+  const deleteAllTasks = async () => {
+    if (!userId) return
+    if (!window.confirm('Delete ALL tasks? This cannot be undone.')) return
+    await supabase.from('task_completions').delete().eq('user_id', userId)
+    await supabase.from('taskitem').delete().eq('user_id', userId)
+    setEvents([demoEvent])
+  }
+
   useEffect(() => {
-    let mounted = true
-    ;(async () => {
-      try {
-        const { data } = await supabase.auth.getUser()
-        const user = data?.user
-        if (!user) {
-          if (mounted) setEvents([demoEvent])
-          return
-        }
-
-        const { data: rows, error } = await supabase
-          .from('taskitem')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('active', true)
-          .order('next_due', { ascending: true })
-
-        if (error) throw error
-
-        if (!rows || rows.length === 0) {
-          if (mounted) setEvents([demoEvent])
-          return
-        }
-
-  // show only tasks that have a next_due (i.e. tasks with a due date).
-  // We intentionally include any next_due value so calendar shows scheduled tasks
-  // in the future (or past) instead of recurring/daily tasks that lack a next_due.
-  const dueRows = rows.filter((r: any) => !!r.next_due)
-        if (!dueRows || dueRows.length === 0) {
-          if (mounted) setEvents([demoEvent])
-          return
-        }
-
-        const mapped: MyEvent[] = dueRows.map((r: any) => {
-          const raw = new Date(r.next_due)
-          // next_due is stored as local midnight → use local date components to get the intended date
-          const start = new Date(raw.getFullYear(), raw.getMonth(), raw.getDate())
-          const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1)
-          const titleParts = [r.name]
-          if (r.xp) titleParts.push(`+${r.xp} XP`)
-          if (r.recurrence) titleParts.push('(repeats)')
-          return { title: titleParts.join(' '), start, end, allDay: true, original: r }
-        })
-
-        if (mounted) setEvents(mapped)
-      } catch (e) {
-        console.error('Failed to load calendar tasks', e)
-        if (mounted) setEvents([demoEvent])
-      }
-    })()
-
-    return () => { mounted = false }
+    fetchEvents()
   }, [])
 
   const onSelectEvent = (ev: MyEvent) => {
@@ -109,7 +103,13 @@ export default function CalendarComponent() {
   return (
     <section className="min-h-screen w-full bg-gradient-to-br from-green-200 to-amber-400 py-16 px-4">
       <div className="container mx-auto max-w-5xl bg-white/70 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
-        <h1 className="text-2xl font-semibold mb-3">Calendar</h1>
+        <div className="flex items-center justify-between mb-3">
+          <h1 className="text-2xl font-semibold">Calendar</h1>
+          <div className="flex gap-2">
+            <button onClick={fetchEvents} className="px-3 py-1 rounded-lg bg-amber-100 text-amber-900 hover:bg-amber-200 text-sm font-medium">↺ Refresh</button>
+            <button onClick={deleteAllTasks} className="px-3 py-1 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium">🗑 Delete All</button>
+          </div>
+        </div>
         <div className="flex items-center gap-2 text-sm mb-4">
           <span className="text-sm text-gray-600">Legend:</span>
           <span className="px-2 py-1 rounded text-white" style={{ backgroundColor: DIFFICULTY_COLORS[1] }}>Easy</span>
