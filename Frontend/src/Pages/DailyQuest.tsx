@@ -41,16 +41,16 @@ const DIFFICULTY_LABEL: Record<number, string> = {
 
 // --- UI Primitives ---
 const Card: React.FC<React.PropsWithChildren<{ title?: string; className?: string }>> = ({ title, className, children }) => (
-  <div className={`bg-white/90 backdrop-blur rounded-2xl shadow-xl p-5 md:p-6 ${className || ""}`}>
-    {title && <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">{title}</h2>}
+  <div className={`glass rounded-2xl shadow-xl p-5 md:p-6 ${className || ""}`}>
+    {title && <h2 className="text-xl md:text-2xl font-bold text-white mb-4">{title}</h2>}
     {children}
   </div>
 );
 
 const StatChip: React.FC<{ label: string; value: string | number }> = ({ label, value }) => (
-  <div className="rounded-xl bg-white border border-gray-200 px-3 py-2 text-center">
-    <div className="text-xs text-gray-500">{label}</div>
-    <div className="text-sm font-bold text-gray-800">{value}</div>
+  <div className="rounded-xl bg-white/10 border border-white/20 px-3 py-2 text-center">
+    <div className="text-xs text-white/50">{label}</div>
+    <div className="text-sm font-bold text-white">{value}</div>
   </div>
 );
 
@@ -60,24 +60,22 @@ const MonsterBattle: React.FC<{ maxHP: number; hp: number; reward: string; xp:nu
   const pct = Math.max(0, Math.min(100, (hp / maxHP) * 100));
 
   return (
-    <div className="relative bg-gradient-to-r from-green-100 to-green-200 p-4 rounded-xl border border-green-300">
-      {/* Enemy HP Bar */}
+    <div className="relative bg-white/10 border border-white/20 p-4 rounded-xl">
       <div className="flex items-center justify-between mb-2">
-        <div className="text-sm font-semibold text-gray-700">Enemy HP</div>
-        <div className="text-xs text-gray-600 font-mono">{hp}/{maxHP}</div>
+        <div className="text-sm font-semibold text-white/80">Enemy HP</div>
+        <div className="text-xs text-white/60 font-mono">{hp}/{maxHP}</div>
       </div>
-      <div className="h-3 bg-gray-200 rounded-full overflow-hidden mb-3">
-        <div className="h-full bg-green-500 transition-all duration-500" style={{ width: `${pct}%` }} />
-      </div>      
+      <div className="h-3 bg-white/10 rounded-full overflow-hidden mb-3">
+        <div className="h-full bg-emerald-400 transition-all duration-500 shadow-[0_0_8px_rgba(52,211,153,0.6)]" style={{ width: `${pct}%` }} />
+      </div>
 
-      {/* Battle field */}
-      <div className="flex justify-between items-center bg-cyan-200 mt-5 rounded-xl p-3">
+      <div className="flex justify-between items-center bg-white/10 border border-white/10 mt-5 rounded-xl p-3">
         <span className="text-4xl">🧍‍♂️</span>
         <span className="text-5xl">👹</span>
       </div>
-      <div className="flex items-center justify-between mt-3 text-sm text-gray-700">
+      <div className="flex items-center justify-between mt-3 text-sm text-white/70">
         <span>Complete dailies to deal damage!</span>
-        <span className="flex items-center gap-1"><span>🎁</span><b>{reward}</b></span>
+        <span className="flex items-center gap-1"><span>🎁</span><b className="text-amber-300">{reward}</b></span>
       </div>
     </div>
   );
@@ -105,37 +103,38 @@ const QuestToggle: React.FC<{ q: Quest; onToggle?: (id: string) => void; onDelet
 
   return (
     <label
-      className={`group flex items-center gap-3 p-3 rounded-xl border transition hover:shadow ${q.completed ? "bg-emerald-50 border-emerald-200" : "bg-white border-gray-200"}`}
+      className={`group flex items-center gap-3 p-3 rounded-xl border transition cursor-pointer ${
+        q.completed
+          ? "bg-emerald-400/10 border-emerald-400/20"
+          : "bg-white/10 border-white/15 hover:bg-white/15"
+      }`}
     >
       <input
         type="checkbox"
-        className="w-5 h-5 rounded border-gray-300"
+        className="w-5 h-5 rounded border-white/30 accent-emerald-400"
         checked={!!q.completed}
         onChange={() => onToggle?.(q.id)}
       />
-      <span className={`flex-1 text-lg ${q.completed ? "line-through text-gray-500" : "text-gray-800"}`}>{q.title}</span>
+      <span className={`flex-1 text-lg ${q.completed ? "line-through text-white/40" : "text-white"}`}>{q.title}</span>
 
-      {/* Difficulty badge */}
-      <span className="text-xs px-2 py-1 rounded-full text-white font-semibold" style={{ backgroundColor: diffColor }}>{diffLabel}</span>
+      <span className="text-xs px-2 py-1 rounded-full text-white font-semibold opacity-80" style={{ backgroundColor: diffColor + '99' }}>{diffLabel}</span>
 
       {typeof q.dmg === "number" && (
-        <span className="text-xs md:text-sm px-2 py-1 rounded-full bg-rose-100 text-rose-800 border border-rose-200">{q.dmg} dmg</span>
+        <span className="text-xs md:text-sm px-2 py-1 rounded-full bg-rose-400/20 text-rose-200 border border-rose-400/25">{q.dmg} dmg</span>
       )}
       {q.reward && (
-        <span className="text-xs md:text-sm px-2 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">{q.reward}</span>
+        <span className="text-xs md:text-sm px-2 py-1 rounded-full bg-amber-400/20 text-amber-200 border border-amber-400/25">{q.reward}</span>
       )}
 
-      {/* recurrence summary */}
       {recurrenceText && (
-        <span className="text-xs md:text-sm px-2 py-1 rounded-full bg-slate-100 text-slate-800 border border-slate-200">{recurrenceText}</span>
+        <span className="text-xs md:text-sm px-2 py-1 rounded-full bg-white/10 text-white/60 border border-white/15">{recurrenceText}</span>
       )}
 
-      {/* delete button */}
       {onDelete && (
         <button
           type="button"
           onClick={e => { e.preventDefault(); onDelete(q.id) }}
-          className="text-red-400 hover:text-red-600 transition-colors px-1 text-lg leading-none"
+          className="text-white/30 hover:text-rose-300 transition-colors px-1 text-lg leading-none"
           title="Delete task"
         >
           ✕
@@ -568,15 +567,17 @@ const DailyQuestPage: React.FC = () => {
 
   
   return (
-    <section className="min-h-dvh w-full bg-gradient-to-br from-green-200 via-amber-100 to-amber-300">
+    <section className="min-h-dvh w-full bg-gradient-to-br from-violet-600 via-purple-800 to-indigo-900">
+      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-purple-400/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/3 left-1/4 w-64 h-64 bg-indigo-400/15 rounded-full blur-3xl pointer-events-none" />
       {/* Header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="text-2xl font-extrabold text-gray-900">FocusQuest</div>
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">Daily</span>
+            <div className="text-2xl font-extrabold text-white drop-shadow">FocusQuest</div>
+            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-400/20 text-emerald-200 border border-emerald-400/30">Daily</span>
           </div>
-          <div className="text-sm text-gray-700">{new Date().toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}</div>
+          <div className="text-sm text-white/60">{new Date().toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}</div>
         </div>
       </div>
 
@@ -597,15 +598,15 @@ const DailyQuestPage: React.FC = () => {
                   <StatChip label="Defense" value={defense} />
                 </div>
                 <div className="mt-3">
-                  <div className="text-xs text-gray-600 mb-1">XP</div>
+                  <div className="text-xs text-white/50 mb-1">XP</div>
                   <div className="flex items-center gap-3">
-                    <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-emerald-500 transition-all duration-300"
+                        className="h-full bg-emerald-400 transition-all duration-300 shadow-[0_0_6px_rgba(52,211,153,0.5)]"
                         style={{ width: `${Math.min(100, pctToNext)}%` }}
                       />
                     </div>
-                    <div className="text-sm font-semibold text-gray-800 w-28 text-right">{xpIntoLevel}/{xpNeededForNext}</div>
+                    <div className="text-sm font-semibold text-white/80 w-28 text-right">{xpIntoLevel}/{xpNeededForNext}</div>
                   </div>
                 </div>
               </div>
@@ -629,11 +630,11 @@ const DailyQuestPage: React.FC = () => {
           {/* Bottom: Tasks - wide single column */}
           <Card className="md:col-span-2">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl md:text-2xl font-bold text-gray-800">Daily Quests</h2>
+              <h2 className="text-xl md:text-2xl font-bold text-white">Daily Quests</h2>
               <div className="flex gap-2">
-                <button onClick={fetchTasks} className="px-3 py-1 rounded bg-amber-100 text-amber-900 hover:bg-amber-200 text-sm">↺ Refresh</button>
-                <button onClick={handleDeleteAllTasks} className="px-3 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200 text-sm">🗑 Delete All</button>
-                <button onClick={() => setShowNewTask(true)} className="px-3 py-1 rounded bg-emerald-600 text-white text-sm">+ Add Task</button>
+                <button onClick={fetchTasks} className="glass-btn text-white px-3 py-1 rounded-lg text-sm">↺ Refresh</button>
+                <button onClick={handleDeleteAllTasks} className="bg-rose-500/20 border border-rose-400/30 text-rose-200 hover:bg-rose-500/30 transition px-3 py-1 rounded-lg text-sm">🗑 Delete All</button>
+                <button onClick={() => setShowNewTask(true)} className="bg-emerald-500/25 border border-emerald-400/35 text-emerald-200 hover:bg-emerald-500/35 transition px-3 py-1 rounded-lg text-sm">+ Add Task</button>
               </div>
             </div>
 
@@ -674,7 +675,7 @@ const DailyQuestPage: React.FC = () => {
               ))}
             </div>
 
-            <div className="mt-4 text-sm text-gray-600">Damage so far: <b>{totalDamage}</b></div>
+            <div className="mt-4 text-sm text-white/50">Damage so far: <b className="text-white/80">{totalDamage}</b></div>
           </Card>
           {showNewTask && (
             <NewTaskModal onClose={() => setShowNewTask(false)} onCreate={handleCreateTask} />
