@@ -111,13 +111,13 @@ const MonsterBattle: React.FC<{
             </span>
             {pct < 25 && <span className="text-base leading-none animate-pulse">💀</span>}
           </div>
-          <span className={`font-mono text-xs font-bold px-2 py-0.5 rounded-full transition-all ${showEnemyHurt ? 'bg-red-400 text-white scale-110' : 'bg-red-100 text-red-700'}`}>
+          <span className={`inline-flex font-mono text-xs font-bold px-2 py-0.5 rounded-full transition-colors duration-150 ${showEnemyHurt ? 'bg-red-500 text-white' : 'bg-red-100 text-red-700'}`}>
             {hp}/{maxHP}
           </span>
         </div>
         <div className="h-4 bg-gray-300/70 rounded-full overflow-hidden shadow-inner">
           <div
-            className="h-full rounded-full transition-all duration-700 bg-gradient-to-r from-red-500 to-red-400 shadow-sm"
+            className="h-full rounded-full transition-[width] duration-500 bg-gradient-to-r from-red-500 to-red-400 shadow-sm"
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -766,6 +766,7 @@ const DailyQuestPage: React.FC = () => {
           {/* Top Right: Battle Arena */}
           <Card title="Battle Arena">
             <MonsterBattle
+              key={currentEnemy?.id ?? 0}
               maxHP={currentEnemy?.maxHP ?? ENEMY_MAX_HP}
               hp={enemyHP}
               reward={`${currentEnemy?.name ?? 'Enemy'} - Drops: ${currentEnemy?.drops.map(d => d.type === 'gold' ? `💰${d.amount}` : d.type === 'xp' ? `XP${d.amount}` : d.name).join(', ')}`}
