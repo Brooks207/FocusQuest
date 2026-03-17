@@ -573,12 +573,12 @@ const DailyQuestPage: React.FC = () => {
     <section className="min-h-dvh w-full bg-gradient-to-br from-green-200 via-amber-100 to-amber-300">
       {/* Header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="text-2xl font-extrabold text-gray-900">FocusQuest</div>
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">Daily</span>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <div className="text-xl sm:text-2xl font-extrabold text-gray-900">FocusQuest</div>
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">Daily</span>
           </div>
-          <div className="text-sm text-gray-700">{new Date().toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}</div>
+          <div className="text-xs sm:text-sm text-gray-700">{new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}</div>
         </div>
       </div>
 
@@ -593,21 +593,21 @@ const DailyQuestPage: React.FC = () => {
               </div>
               <div className="flex-1">
                 <div className="font-semibold text-gray-800 text-lg">{profileName}</div>
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  <StatChip label="Attack" value={`${playerAttack}`} />
-                  <StatChip label="Current HP" value={`${playerHP}/${playerMaxHP}`} />
-                  <StatChip label="Defense" value={defense} />
+                <div className="mt-3 grid grid-cols-3 gap-1.5">
+                  <StatChip label="ATK" value={`${playerAttack}`} />
+                  <StatChip label="HP" value={`${playerHP}/${playerMaxHP}`} />
+                  <StatChip label="DEF" value={defense} />
                 </div>
                 <div className="mt-3">
                   <div className="text-xs text-gray-600 mb-1">XP</div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-emerald-500 transition-all duration-300"
                         style={{ width: `${Math.min(100, pctToNext)}%` }}
                       />
                     </div>
-                    <div className="text-sm font-semibold text-gray-800 w-28 text-right">{xpIntoLevel}/{xpNeededForNext}</div>
+                    <div className="text-xs font-semibold text-gray-800 shrink-0">{xpIntoLevel}/{xpNeededForNext}</div>
                   </div>
                 </div>
               </div>

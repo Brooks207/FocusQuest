@@ -5,7 +5,7 @@ const About: React.FC = () => {
     const navigate = useNavigate();
     return (
         <section className="min-h-screen w-full bg-gradient-to-br from-green-200 to-amber-400 py-16 px-4">
-            <div className="container mx-auto max-w-5xl bg-white/70 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
+            <div className="container mx-auto max-w-5xl bg-white/70 backdrop-blur-sm rounded-2xl p-4 sm:p-8 shadow-lg">
                 
                 {/* Top Section */}
                 <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
@@ -15,7 +15,7 @@ const About: React.FC = () => {
                         <span className="text-2xl font-bold text-gray-800">
                             FocusQuest
                         </span>
-                        <h1 className="text-4xl text-gray-900 font-extrabold leading-tight mt-2">
+                        <h1 className="text-2xl sm:text-4xl text-gray-900 font-extrabold leading-tight mt-2">
                             About Us!
                         </h1>
                         <p className="text-lg text-gray-700 max-w-md mt-4">
@@ -66,7 +66,7 @@ const About: React.FC = () => {
                 <div className="text-center mt-12">
                     <button 
                         onClick={() => navigate('/')}
-                        className="bg-white text-amber-900 hover:bg-amber-800 hover:text-white transition-all px-8 py-4 rounded-full text-xl font-semibold shadow-lg cursor-pointer"
+                        className="bg-white text-amber-900 hover:bg-amber-800 hover:text-white transition-all px-6 py-3 rounded-full text-base sm:text-xl font-semibold shadow-lg cursor-pointer w-full sm:w-auto"
                     >
                         ← Back to Home
                     </button>

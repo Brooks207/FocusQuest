@@ -47,7 +47,7 @@ const Shop: React.FC = () => {
         </span>
 
         {/* Page Title */}
-        <h1 className="text-5xl text-gray-900 font-extrabold leading-tight">
+        <h1 className="text-3xl sm:text-5xl text-gray-900 font-extrabold leading-tight">
           Item Shop
         </h1>
 
@@ -106,7 +106,7 @@ const Shop: React.FC = () => {
         {/* Navigation */}
         <button
           onClick={() => navigate("/")}
-          className="bg-white text-amber-900 hover:bg-amber-800 hover:text-white transition-all px-8 py-4 rounded-full text-xl font-semibold shadow-lg cursor-pointer"
+          className="bg-white text-amber-900 hover:bg-amber-800 hover:text-white transition-all px-6 py-3 rounded-full text-base sm:text-xl font-semibold shadow-lg cursor-pointer w-full sm:w-auto"
         >
           ← Back to Home
         </button>
