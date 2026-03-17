@@ -83,8 +83,8 @@ const MonsterBattle: React.FC<{ maxHP: number; hp: number; reward: string; xp:nu
 };
 
 // --- Quest Toggle ---
-const QuestToggle: React.FC<{ q: Quest; onToggle?: (id: string) => void }>
-= ({ q, onToggle }) => {
+const QuestToggle: React.FC<{ q: Quest; onToggle?: (id: string) => void; onDelete?: (id: string) => void }>
+= ({ q, onToggle, onDelete }) => {
   const diff = q.difficulty || 1
   const diffColor = DIFFICULTY_COLORS[diff] || DIFFICULTY_COLORS[1]
   const diffLabel = DIFFICULTY_LABEL[diff] || DIFFICULTY_LABEL[1]
@@ -127,6 +127,18 @@ const QuestToggle: React.FC<{ q: Quest; onToggle?: (id: string) => void }>
       {/* recurrence summary */}
       {recurrenceText && (
         <span className="text-xs md:text-sm px-2 py-1 rounded-full bg-slate-100 text-slate-800 border border-slate-200">{recurrenceText}</span>
+      )}
+
+      {/* delete button */}
+      {onDelete && (
+        <button
+          type="button"
+          onClick={e => { e.preventDefault(); onDelete(q.id) }}
+          className="text-red-400 hover:text-red-600 transition-colors px-1 text-lg leading-none"
+          title="Delete task"
+        >
+          ✕
+        </button>
       )}
     </label>
   )
@@ -527,6 +539,16 @@ const DailyQuestPage: React.FC = () => {
     // re-fetch to sync server-side defaults (xp/dmg, next_due)
     await fetchTasks()
   }
+
+  const handleDeleteTask = async (id: string) => {
+    const { data: userData } = await supabase.auth.getUser()
+    const userId = userData?.user?.id
+    if (!userId) return
+    // remove completion records first (foreign key constraint)
+    await supabase.from('task_completions').delete().eq('task_id', id)
+    const { error } = await supabase.from('taskitem').delete().eq('id', id).eq('user_id', userId)
+    if (!error) setTasks(prev => prev.filter(t => t.id !== id))
+  }
   
 
 
@@ -629,6 +651,7 @@ const DailyQuestPage: React.FC = () => {
                       recurrence: t.recurrence,
                   }}
                   onToggle={toggleDaily}
+                  onDelete={handleDeleteTask}
                 />
               ))}
             </div>
