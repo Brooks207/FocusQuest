@@ -65,11 +65,26 @@ const MonsterBattle: React.FC<{
   maxHP: number; hp: number; reward: string; xp: number;
   enemyLevel: number; playerAttack: number; baseAttack: number; defense: number;
   lastCounterDmg?: number | null;
+  lastPlayerDmg?: number | null;
 }>
-= ({ maxHP, hp, reward, enemyLevel, playerAttack, baseAttack, defense, lastCounterDmg }) => {
+= ({ maxHP, hp, reward, enemyLevel, playerAttack, baseAttack, defense, lastCounterDmg, lastPlayerDmg }) => {
   const pct = Math.max(0, Math.min(100, (hp / maxHP) * 100));
 
-  // pre-compute displayed damage values
+  // animation phase: idle → playerAttack (player lunges + enemy shakes) → enemyAttack (enemy lunges + player shakes)
+  const [phase, setPhase] = useState<'idle' | 'playerAttack' | 'enemyAttack'>('idle');
+  const [showPlayerHurt, setShowPlayerHurt] = useState(false);
+  const [showEnemyHurt, setShowEnemyHurt] = useState(false);
+
+  // trigger sequence when enemy counter-attacks (means player just attacked too)
+  useEffect(() => {
+    if (lastCounterDmg == null) return;
+    setPhase('playerAttack');
+    setShowEnemyHurt(true);
+    const t1 = setTimeout(() => { setPhase('enemyAttack'); setShowEnemyHurt(false); setShowPlayerHurt(true); }, 380);
+    const t2 = setTimeout(() => { setPhase('idle'); setShowPlayerHurt(false); }, 750);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [lastCounterDmg]);
+
   const counterHit = Math.max(1, enemyLevel * ENEMY_COUNTER_BASE - defense);
   const rows = [
     { diff: 'Easy',      color: '#10B981', playerDmg: Math.round(10 * playerAttack / baseAttack) },
@@ -81,7 +96,12 @@ const MonsterBattle: React.FC<{
   return (
     <div className="relative bg-gradient-to-br from-green-100 via-emerald-100 to-amber-100 p-4 rounded-2xl border border-green-300 space-y-3 shadow-lg overflow-hidden">
 
-      {/* Enemy HP bar — game-style */}
+      {/* Full-arena red flash when player is hurt */}
+      {showPlayerHurt && (
+        <div className="absolute inset-0 rounded-2xl bg-red-500 animate-hurt-flash pointer-events-none z-10" />
+      )}
+
+      {/* Enemy HP bar */}
       <div className="space-y-1">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
@@ -91,7 +111,7 @@ const MonsterBattle: React.FC<{
             </span>
             {pct < 25 && <span className="text-base leading-none animate-pulse">💀</span>}
           </div>
-          <span className="font-mono text-xs font-bold text-red-700 bg-red-100 px-2 py-0.5 rounded-full">
+          <span className={`font-mono text-xs font-bold px-2 py-0.5 rounded-full transition-all ${showEnemyHurt ? 'bg-red-400 text-white scale-110' : 'bg-red-100 text-red-700'}`}>
             {hp}/{maxHP}
           </span>
         </div>
@@ -104,34 +124,46 @@ const MonsterBattle: React.FC<{
       </div>
 
       {/* Battle arena */}
-      <div className="relative flex justify-between items-end bg-gradient-to-b from-cyan-300/60 to-blue-200/60 backdrop-blur-sm rounded-2xl px-5 py-4 border border-cyan-300/50 shadow-inner overflow-visible">
-        {/* Ground line */}
+      <div className="relative flex justify-between items-end bg-gradient-to-b from-cyan-300/60 to-blue-200/60 rounded-2xl px-5 py-4 border border-cyan-300/50 shadow-inner overflow-visible">
         <div className="absolute bottom-3 left-4 right-4 h-px bg-cyan-400/40 rounded-full" />
 
         {/* Player */}
         <div className="relative flex flex-col items-center gap-0.5">
+          {/* Counter-damage float — big red, floats up */}
           {lastCounterDmg != null && lastCounterDmg > 0 && (
-            <span
-              className="absolute -top-7 left-1/2 -translate-x-1/2 text-sm font-black text-red-600 drop-shadow-md whitespace-nowrap animate-slide-down"
-              style={{ animation: 'floatUp 1s ease-out forwards' }}
-            >
-              -{lastCounterDmg} HP!
+            <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-2xl font-black text-red-600 drop-shadow-lg whitespace-nowrap animate-float-up z-20 pointer-events-none"
+              style={{ textShadow: '0 0 8px rgba(220,38,38,0.6)' }}>
+              -{lastCounterDmg}💔
             </span>
           )}
-          <span className="text-5xl leading-none drop-shadow-md">🧍‍♂️</span>
+          <span className={`text-5xl leading-none drop-shadow-md select-none transition-all
+            ${phase === 'playerAttack' ? 'animate-player-attack' : ''}
+            ${phase === 'enemyAttack'  ? 'animate-hurt-shake'   : ''}
+          `}>🧍‍♂️</span>
           <span className="text-[9px] font-pixel text-cyan-800 leading-none">YOU</span>
         </div>
 
         {/* VS badge */}
-        <div className="flex flex-col items-center justify-center z-10">
-          <span className="font-fantasy text-base font-black text-white bg-gradient-to-br from-amber-400 to-orange-500 rounded-full w-9 h-9 flex items-center justify-center shadow-lg border-2 border-white/60 leading-none">
+        <div className="z-10 flex-shrink-0">
+          <span className="font-fantasy text-base font-black text-white bg-gradient-to-br from-amber-400 to-orange-500 rounded-full w-9 h-9 flex items-center justify-center shadow-lg border-2 border-white/60">
             VS
           </span>
         </div>
 
         {/* Enemy */}
-        <div className="flex flex-col items-center gap-0.5">
-          <span className={`text-5xl leading-none drop-shadow-md ${pct < 25 ? 'animate-pulse' : ''}`}>👹</span>
+        <div className="relative flex flex-col items-center gap-0.5">
+          {/* Player-damage float — big green, floats up from enemy */}
+          {lastPlayerDmg != null && lastPlayerDmg > 0 && (
+            <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-2xl font-black text-green-600 drop-shadow-lg whitespace-nowrap animate-float-up z-20 pointer-events-none"
+              style={{ textShadow: '0 0 8px rgba(22,163,74,0.6)' }}>
+              -{lastPlayerDmg}⚔️
+            </span>
+          )}
+          <span className={`text-5xl leading-none drop-shadow-md select-none transition-all
+            ${phase === 'playerAttack' ? 'animate-hurt-shake'  : ''}
+            ${phase === 'enemyAttack'  ? 'animate-enemy-attack': ''}
+            ${pct < 25 && phase === 'idle' ? 'animate-pulse' : ''}
+          `}>👹</span>
           <span className="text-[9px] font-pixel text-cyan-800 leading-none">ENEMY</span>
         </div>
       </div>
@@ -140,10 +172,7 @@ const MonsterBattle: React.FC<{
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-xs font-semibold text-gray-500 shrink-0">Drops:</span>
         {reward.split(',').map((item, i) => (
-          <span
-            key={i}
-            className="inline-flex items-center gap-1 bg-amber-100 border border-amber-300 text-amber-800 text-xs font-semibold px-2 py-0.5 rounded-full shadow-sm"
-          >
+          <span key={i} className="inline-flex items-center gap-1 bg-amber-100 border border-amber-300 text-amber-800 text-xs font-semibold px-2 py-0.5 rounded-full shadow-sm">
             🎁 {item.trim()}
           </span>
         ))}
@@ -151,35 +180,21 @@ const MonsterBattle: React.FC<{
 
       {/* Combat rules */}
       <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-3 space-y-2 border border-white/80 shadow-sm">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center justify-between">
           <span className="font-fantasy text-xs font-bold text-gray-700 tracking-wide">⚔️ Combat Rules</span>
           <span className="text-[10px] text-gray-400 italic">Defense reduces incoming dmg</span>
         </div>
-
-        {/* Column labels */}
-        <div className="grid grid-cols-3 text-[10px] font-bold text-gray-400 uppercase tracking-wide px-1 mb-0.5">
+        <div className="grid grid-cols-3 text-[10px] font-bold text-gray-400 uppercase tracking-wide px-1">
           <span>Difficulty</span>
           <span className="text-center text-green-700">⚔️ You deal</span>
           <span className="text-center text-red-600">💥 Enemy hits</span>
         </div>
-
-        {/* Rows as cards */}
         <div className="space-y-1.5">
           {rows.map(r => (
-            <div
-              key={r.diff}
-              className="grid grid-cols-3 items-center bg-white/80 rounded-xl px-2 py-1.5 border border-gray-100 shadow-sm"
-            >
-              <span className="text-xs font-black leading-none" style={{ color: r.color }}>
-                {r.diff}
-              </span>
-              <span className="text-center text-xs font-black text-green-700 bg-green-50 rounded-lg py-0.5 mx-1">
-                +{r.playerDmg}
-              </span>
-              <span className="text-center text-xs font-black text-red-600 bg-red-50 rounded-lg py-0.5 mx-1">
-                -{counterHit}
-              </span>
+            <div key={r.diff} className="grid grid-cols-3 items-center bg-white/80 rounded-xl px-2 py-1.5 border border-gray-100 shadow-sm">
+              <span className="text-xs font-black leading-none" style={{ color: r.color }}>{r.diff}</span>
+              <span className="text-center text-xs font-black text-green-700 bg-green-50 rounded-lg py-0.5 mx-1">+{r.playerDmg}</span>
+              <span className="text-center text-xs font-black text-red-600 bg-red-50 rounded-lg py-0.5 mx-1">-{counterHit}</span>
             </div>
           ))}
         </div>
@@ -318,6 +333,7 @@ const DailyQuestPage: React.FC = () => {
   const [playerHP, setPlayerHP] = useState<number>(100)
   const [equippedBonuses, setEquippedBonuses] = useState({ attack_bonus: 0, defense_bonus: 0 })
   const [lastCounterDmg, setLastCounterDmg] = useState<number | null>(null)
+  const [lastPlayerDmg, setLastPlayerDmg] = useState<number | null>(null)
   const [enemies, setEnemies] = useState<Enemy[]>([])
   const [enemyRound, setEnemyRound] = useState<number>(1)
   const [loot, setLoot] = useState<Array<{ type: string; amount?: number; name?: string }>>([])
@@ -597,8 +613,11 @@ const DailyQuestPage: React.FC = () => {
         console.error('Failed to award currency:', e)
       }
 
-      // apply damage to current enemy
+      // apply damage to current enemy + show player attack feedback
       try {
+        const scaledDmg = Math.max(1, Math.round(dmg * (playerAttack / BASE_ATTACK)))
+        setLastPlayerDmg(scaledDmg)
+        setTimeout(() => setLastPlayerDmg(null), 1200)
         await applyDamageToEnemy(dmg, userId)
       } catch (e) {
         console.error('Failed applying damage to enemy', e)
@@ -756,6 +775,7 @@ const DailyQuestPage: React.FC = () => {
               baseAttack={BASE_ATTACK}
               defense={defense}
               lastCounterDmg={lastCounterDmg}
+              lastPlayerDmg={lastPlayerDmg}
             />
             {/* Show small loot list */}
             {loot.length > 0 && (
