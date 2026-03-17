@@ -34,20 +34,11 @@ export default function CalendarComponent() {
     }
   }
 
-  // Demo fallback event (all-day)
-  const demoStart = new Date()
-  const demoEvent: MyEvent = {
-    title: 'Demo task',
-    start: new Date(demoStart.getFullYear(), demoStart.getMonth(), demoStart.getDate()),
-    end: new Date(demoStart.getFullYear(), demoStart.getMonth(), demoStart.getDate() + 1),
-    allDay: true,
-  }
-
   const fetchEvents = async () => {
     try {
       const { data } = await supabase.auth.getUser()
       const user = data?.user
-      if (!user) { setEvents([demoEvent]); return }
+      if (!user) { setEvents([]); return }
       setUserId(user.id)
 
       const { data: rows, error } = await supabase
@@ -60,7 +51,6 @@ export default function CalendarComponent() {
       if (error) throw error
 
       const dueRows = (rows || []).filter((r: any) => !!r.next_due)
-      if (!dueRows.length) { setEvents([demoEvent]); return }
 
       const mapped: MyEvent[] = dueRows.map((r: any) => {
         const raw = new Date(r.next_due)
@@ -75,7 +65,7 @@ export default function CalendarComponent() {
       setEvents(mapped)
     } catch (e) {
       console.error('Failed to load calendar tasks', e)
-      setEvents([demoEvent])
+      setEvents([])
     }
   }
 
@@ -84,7 +74,7 @@ export default function CalendarComponent() {
     if (!window.confirm('Delete ALL tasks? This cannot be undone.')) return
     await supabase.from('task_completions').delete().eq('user_id', userId)
     await supabase.from('taskitem').delete().eq('user_id', userId)
-    setEvents([demoEvent])
+    setEvents([])
   }
 
   useEffect(() => {
