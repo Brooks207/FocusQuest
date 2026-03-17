@@ -66,24 +66,32 @@ const MonsterBattle: React.FC<{
   enemyLevel: number; playerAttack: number; baseAttack: number; defense: number;
   lastCounterDmg?: number | null;
   lastPlayerDmg?: number | null;
+  attackTick?: number;
 }>
-= ({ maxHP, hp, reward, enemyLevel, playerAttack, baseAttack, defense, lastCounterDmg, lastPlayerDmg }) => {
+= ({ maxHP, hp, reward, enemyLevel, playerAttack, baseAttack, defense, lastCounterDmg, lastPlayerDmg, attackTick }) => {
   const pct = Math.max(0, Math.min(100, (hp / maxHP) * 100));
+
+  // delay transition so HP bar doesn't animate from 0% on mount/remount
+  const [barReady, setBarReady] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setBarReady(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   // animation phase: idle → playerAttack (player lunges + enemy shakes) → enemyAttack (enemy lunges + player shakes)
   const [phase, setPhase] = useState<'idle' | 'playerAttack' | 'enemyAttack'>('idle');
   const [showPlayerHurt, setShowPlayerHurt] = useState(false);
   const [showEnemyHurt, setShowEnemyHurt] = useState(false);
 
-  // trigger sequence when enemy counter-attacks (means player just attacked too)
+  // trigger sequence on every attack tick (tick always increments so same-damage rapid attacks work)
   useEffect(() => {
-    if (lastCounterDmg == null) return;
+    if (attackTick == null || attackTick === 0) return;
     setPhase('playerAttack');
     setShowEnemyHurt(true);
     const t1 = setTimeout(() => { setPhase('enemyAttack'); setShowEnemyHurt(false); setShowPlayerHurt(true); }, 380);
     const t2 = setTimeout(() => { setPhase('idle'); setShowPlayerHurt(false); }, 750);
     return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, [lastCounterDmg]);
+  }, [attackTick]);
 
   const counterHit = Math.max(1, enemyLevel * ENEMY_COUNTER_BASE - defense);
   const rows = [
@@ -117,7 +125,7 @@ const MonsterBattle: React.FC<{
         </div>
         <div className="h-4 bg-gray-300/70 rounded-full overflow-hidden shadow-inner">
           <div
-            className="h-full rounded-full transition-[width] duration-500 bg-gradient-to-r from-red-500 to-red-400 shadow-sm"
+            className={`h-full rounded-full bg-gradient-to-r from-red-500 to-red-400 shadow-sm ${barReady ? 'transition-[width] duration-500' : ''}`}
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -334,6 +342,7 @@ const DailyQuestPage: React.FC = () => {
   const [equippedBonuses, setEquippedBonuses] = useState({ attack_bonus: 0, defense_bonus: 0 })
   const [lastCounterDmg, setLastCounterDmg] = useState<number | null>(null)
   const [lastPlayerDmg, setLastPlayerDmg] = useState<number | null>(null)
+  const [attackTick, setAttackTick] = useState(0)
   const [enemies, setEnemies] = useState<Enemy[]>([])
   const [enemyRound, setEnemyRound] = useState<number>(1)
   const [loot, setLoot] = useState<Array<{ type: string; amount?: number; name?: string }>>([])
@@ -637,6 +646,7 @@ const DailyQuestPage: React.FC = () => {
         playerHPRef.current = newHp
         setPlayerHP(newHp)
         setLastCounterDmg(counterDmg)
+        setAttackTick(t => t + 1)
         setTimeout(() => setLastCounterDmg(null), 1500)
         await setPlayerHp(userId, newHp)
       } catch (e) {
@@ -784,6 +794,7 @@ const DailyQuestPage: React.FC = () => {
               defense={defense}
               lastCounterDmg={lastCounterDmg}
               lastPlayerDmg={lastPlayerDmg}
+              attackTick={attackTick}
             />
             {/* Show small loot list */}
             {loot.length > 0 && (
