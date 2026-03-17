@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { addXp, addCurrency, getXp, getLevelInfo } from '../lib/xp';
 import { supabase } from '../lib/supabaseClient';
 import NewTaskModal from '../Components/NewTaskModal';
-import { computeNextDue, isDueOnDate } from '../lib/recurrence';
+import { computeNextDue, isDueOnDate } from '../lib/recurrence'
+import { playDelete, playDeleteAll, playComplete, playAdd } from '../lib/sounds';
 import { getOrCreatePlayerStats, incrementEnemiesDefeated, setPlayerHp, setLastEnemyRound, setEnemyHp } from '../lib/game';
 
 // --- Types ---
@@ -446,6 +447,7 @@ const DailyQuestPage: React.FC = () => {
     if (!task) return
 
     // Optimistic UI update: mark as completed locally immediately
+    playComplete()
     setTasks(prev => prev.map(t => t.id === id ? { ...t, completed_at: new Date().toISOString() } : t))
 
     try {
@@ -534,9 +536,8 @@ const DailyQuestPage: React.FC = () => {
 
   // handler for modal create
   const handleCreateTask = async (task: any) => {
-    // Optimistically prepend and then refresh to pick up defaults/triggers
+    playAdd()
     setTasks(prev => [task, ...prev])
-    // re-fetch to sync server-side defaults (xp/dmg, next_due)
     await fetchTasks()
   }
 
@@ -546,7 +547,10 @@ const DailyQuestPage: React.FC = () => {
     if (!userId) return
     await supabase.from('task_completions').delete().eq('task_id', id)
     const { error } = await supabase.from('taskitem').delete().eq('id', id).eq('user_id', userId)
-    if (!error) setTasks(prev => prev.filter(t => t.id !== id))
+    if (!error) {
+      playDelete()
+      setTasks(prev => prev.filter(t => t.id !== id))
+    }
   }
 
   const handleDeleteAllTasks = async () => {
@@ -556,6 +560,7 @@ const DailyQuestPage: React.FC = () => {
     if (!userId) return
     await supabase.from('task_completions').delete().eq('user_id', userId)
     await supabase.from('taskitem').delete().eq('user_id', userId)
+    playDeleteAll()
     setTasks([])
   }
   

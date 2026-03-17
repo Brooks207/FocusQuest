@@ -3,7 +3,8 @@ import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import '../styles/calendar-theme.css';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../lib/supabaseClient'
+import { playDeleteAll } from '../lib/sounds';
 
 const localizer = momentLocalizer(moment);
 
@@ -74,6 +75,7 @@ export default function CalendarComponent() {
     if (!window.confirm('Delete ALL tasks? This cannot be undone.')) return
     await supabase.from('task_completions').delete().eq('user_id', userId)
     await supabase.from('taskitem').delete().eq('user_id', userId)
+    playDeleteAll()
     setEvents([])
   }
 
