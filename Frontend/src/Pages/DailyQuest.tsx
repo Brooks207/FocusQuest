@@ -731,6 +731,48 @@ const DailyQuestPage: React.FC = () => {
     playDeleteAll()
     setTasks([])
   }
+
+  const [resetting, setResetting] = useState(false)
+  const handleDevReset = async () => {
+    if (!window.confirm('DEV RESET: wipe all game data (XP, HP, gold, tasks, inventory, enemy round)? This cannot be undone.')) return
+    setResetting(true)
+    try {
+      const { data: userData } = await supabase.auth.getUser()
+      const userId = userData?.user?.id
+      if (!userId) return
+
+      await Promise.all([
+        supabase.from('task_completions').delete().eq('user_id', userId),
+        supabase.from('taskitem').delete().eq('user_id', userId),
+        supabase.from('user_inventory').delete().eq('user_id', userId),
+        supabase.from('shop_purchases').delete().eq('user_id', userId),
+        supabase.from('profiles').update({ xp: 0, currency: 0, level: 1 }).eq('id', userId),
+        supabase.from('player_stats').update({ player_hp: 100, last_enemy_round: 1, enemies_defeated: 0, current_enemy_hp: null }).eq('user_id', userId),
+      ])
+
+      localStorage.removeItem('lastEnemyAttackDate')
+
+      // reset all local state
+      playerHPRef.current = 100
+      setPlayerHP(100)
+      setUserXp(0)
+      setEnemyRound(1)
+      setAttackTick(0)
+      setLastCounterDmg(null)
+      setLastPlayerDmg(null)
+      setLoot([])
+      setEquippedBonuses({ attack_bonus: 0, defense_bonus: 0 })
+      const freshEnemy = spawnEnemy(1, userId)
+      setEnemies([freshEnemy])
+      enemiesRef.current = [freshEnemy]
+      setTasks([])
+    } catch (e) {
+      console.error('Dev reset failed', e)
+      alert('Reset failed — check console')
+    } finally {
+      setResetting(false)
+    }
+  }
   
 
 
@@ -855,6 +897,21 @@ const DailyQuestPage: React.FC = () => {
           {showNewTask && (
             <NewTaskModal onClose={() => setShowNewTask(false)} onCreate={handleCreateTask} />
           )}
+        </div>
+
+        {/* Dev Reset */}
+        <div className="mt-10 border-t border-dashed border-red-300 pt-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-red-400">Dev Tools</span>
+          </div>
+          <button
+            onClick={handleDevReset}
+            disabled={resetting}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-red-300 bg-red-50 text-red-600 text-sm font-semibold hover:bg-red-100 active:bg-red-200 transition disabled:opacity-50"
+          >
+            🔄 {resetting ? 'Resetting…' : 'Reset Everything'}
+          </button>
+          <p className="mt-1 text-[10px] text-red-400">Wipes XP, gold, HP, tasks, inventory &amp; enemy progress</p>
         </div>
       </div>
     </section>
