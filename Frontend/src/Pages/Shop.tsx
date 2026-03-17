@@ -2,10 +2,8 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { getCurrency } from "../lib/xp";
-import {
-  getOrCreateRotation, getRotationItems, getUserPurchasesInRotation, purchaseItem,
-  ShopItem, ShopRotation,
-} from "../lib/shop";
+import { getOrCreateRotation, getRotationItems, getUserPurchasesInRotation, purchaseItem } from "../lib/shop";
+import type { ShopItem, ShopRotation } from "../lib/shop";
 
 function useCountdown(refreshesAt: string | null) {
   const [timeLeft, setTimeLeft] = useState("");

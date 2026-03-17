@@ -2,7 +2,8 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { setPlayerHp, getOrCreatePlayerStats } from "../lib/game";
-import { getUserInventory, equipItem, unequipItem, useConsumable, InventoryItem } from "../lib/shop";
+import { getUserInventory, equipItem, unequipItem, useConsumable } from "../lib/shop";
+import type { InventoryItem } from "../lib/shop";
 
 const TYPE_LABEL: Record<string, string> = {
   weapon: "⚔️ Weapons",
