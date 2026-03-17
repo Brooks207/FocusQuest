@@ -395,6 +395,7 @@ const DailyQuestPage: React.FC = () => {
         const persistedHp = stats?.player_hp ?? 100
         const persistedEnemyHp = (stats as any)?.current_enemy_hp ?? null
         setEnemyRound(persistedRound)
+        playerHPRef.current = persistedHp
         setPlayerHP(persistedHp)
         // spawn enemy deterministically, then if DB has a saved enemy HP, use it
         const enemy = spawnEnemy(persistedRound, userId)
@@ -555,7 +556,8 @@ const DailyQuestPage: React.FC = () => {
         }, 0)
         if (totalMissedDamage > 0) {
           // update local HP and persist to DB when user exists
-          let newHp = Math.max(0, playerHP - totalMissedDamage)
+          let newHp = Math.max(0, playerHPRef.current - totalMissedDamage)
+          playerHPRef.current = newHp
           setPlayerHP(newHp)
           try {
             const { data } = await supabase.auth.getUser()
@@ -632,6 +634,7 @@ const DailyQuestPage: React.FC = () => {
         const enemyLevel = enemiesRef.current?.[0]?.level ?? 1
         const counterDmg = Math.max(1, enemyLevel * ENEMY_COUNTER_BASE - defense)
         const newHp = Math.max(0, playerHPRef.current - counterDmg)
+        playerHPRef.current = newHp
         setPlayerHP(newHp)
         setLastCounterDmg(counterDmg)
         setTimeout(() => setLastCounterDmg(null), 1500)
