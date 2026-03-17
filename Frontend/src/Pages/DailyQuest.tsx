@@ -105,42 +105,44 @@ const QuestToggle: React.FC<{ q: Quest; onToggle?: (id: string) => void; onDelet
 
   return (
     <label
-      className={`group flex items-center gap-3 p-3 rounded-xl border transition hover:shadow ${q.completed ? "bg-emerald-50 border-emerald-200" : "bg-white border-gray-200"}`}
+      className={`group flex flex-col gap-2 p-3 rounded-xl border transition hover:shadow ${q.completed ? "bg-emerald-50 border-emerald-200" : "bg-white border-gray-200"}`}
     >
-      <input
-        type="checkbox"
-        className="w-5 h-5 rounded border-gray-300"
-        checked={!!q.completed}
-        onChange={() => onToggle?.(q.id)}
-      />
-      <span className={`flex-1 text-lg ${q.completed ? "line-through text-gray-500" : "text-gray-800"}`}>{q.title}</span>
+      <div className="flex items-center gap-3">
+        <input
+          type="checkbox"
+          className="w-5 h-5 rounded border-gray-300 shrink-0"
+          checked={!!q.completed}
+          onChange={() => onToggle?.(q.id)}
+        />
+        <span className={`flex-1 text-base sm:text-lg ${q.completed ? "line-through text-gray-500" : "text-gray-800"}`}>{q.title}</span>
 
-      {/* Difficulty badge */}
-      <span className="text-xs px-2 py-1 rounded-full text-white font-semibold" style={{ backgroundColor: diffColor }}>{diffLabel}</span>
+        {/* delete button */}
+        {onDelete && (
+          <button
+            type="button"
+            onClick={e => { e.preventDefault(); onDelete(q.id) }}
+            className="text-red-400 hover:text-red-600 transition-colors px-1 text-lg leading-none shrink-0"
+            title="Delete task"
+          >
+            ✕
+          </button>
+        )}
+      </div>
 
-      {typeof q.dmg === "number" && (
-        <span className="text-xs md:text-sm px-2 py-1 rounded-full bg-rose-100 text-rose-800 border border-rose-200">{q.dmg} dmg</span>
-      )}
-      {q.reward && (
-        <span className="text-xs md:text-sm px-2 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">{q.reward}</span>
-      )}
+      {/* Badges row — wraps on small screens */}
+      <div className="flex flex-wrap gap-1.5 pl-8">
+        <span className="text-xs px-2 py-0.5 rounded-full text-white font-semibold" style={{ backgroundColor: diffColor }}>{diffLabel}</span>
 
-      {/* recurrence summary */}
-      {recurrenceText && (
-        <span className="text-xs md:text-sm px-2 py-1 rounded-full bg-slate-100 text-slate-800 border border-slate-200">{recurrenceText}</span>
-      )}
-
-      {/* delete button */}
-      {onDelete && (
-        <button
-          type="button"
-          onClick={e => { e.preventDefault(); onDelete(q.id) }}
-          className="text-red-400 hover:text-red-600 transition-colors px-1 text-lg leading-none"
-          title="Delete task"
-        >
-          ✕
-        </button>
-      )}
+        {typeof q.dmg === "number" && (
+          <span className="text-xs px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200">{q.dmg} dmg</span>
+        )}
+        {q.reward && (
+          <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">{q.reward}</span>
+        )}
+        {recurrenceText && (
+          <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-800 border border-slate-200">{recurrenceText}</span>
+        )}
+      </div>
     </label>
   )
 }
@@ -628,12 +630,12 @@ const DailyQuestPage: React.FC = () => {
 
           {/* Bottom: Tasks - wide single column */}
           <Card className="md:col-span-2">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl md:text-2xl font-bold text-gray-800">Daily Quests</h2>
-              <div className="flex gap-2">
-                <button onClick={fetchTasks} className="px-3 py-1 rounded bg-amber-100 text-amber-900 hover:bg-amber-200 text-sm">↺ Refresh</button>
-                <button onClick={handleDeleteAllTasks} className="px-3 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200 text-sm">🗑 Delete All</button>
-                <button onClick={() => setShowNewTask(true)} className="px-3 py-1 rounded bg-emerald-600 text-white text-sm">+ Add Task</button>
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <h2 className="text-xl md:text-2xl font-bold text-gray-800 flex-1 min-w-0">Daily Quests</h2>
+              <div className="flex gap-2 shrink-0">
+                <button onClick={fetchTasks} className="px-3 py-1 rounded bg-amber-100 text-amber-900 hover:bg-amber-200 text-sm">↺</button>
+                <button onClick={handleDeleteAllTasks} className="px-3 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200 text-sm">🗑</button>
+                <button onClick={() => setShowNewTask(true)} className="px-3 py-1 rounded bg-emerald-600 text-white text-sm">+ Add</button>
               </div>
             </div>
 

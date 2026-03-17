@@ -156,7 +156,7 @@ const Profile: React.FC = () => {
 
   return (
     <section className="absolute inset-0 flex flex-col justify-center items-center bg-gradient-to-br from-green-200 to-amber-400 text-gray-800 overflow-hidden">
-      <div className="bg-white rounded-3xl shadow-xl p-10 w-full max-w-xl relative">
+      <div className="bg-white rounded-3xl shadow-xl p-5 sm:p-10 w-full max-w-xl relative mx-4 sm:mx-0">
         {/* Return button */}
         <div className="mb-6">
           <button
@@ -176,7 +176,7 @@ const Profile: React.FC = () => {
         ) : (
           <>
             {/* Avatar + Gear */}
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
               {/* Avatar + Info */}
               <div className="flex items-center space-x-4">
                 <label className="relative w-24 h-24 rounded-full cursor-pointer group">
@@ -206,15 +206,15 @@ const Profile: React.FC = () => {
             </div>
 
             {/* Info List */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               {/* Email */}
-              <div className="flex justify-between items-center">
-                <span className="font-semibold bg-gray-200 px-4 py-2 rounded-lg w-32 text-center">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold bg-gray-200 px-3 py-2 rounded-lg w-24 text-center text-sm shrink-0">
                   Email
                 </span>
-                <span className="truncate max-w-[50%]">{authEmail || "—"}</span>
+                <span className="flex-1 truncate text-sm">{authEmail || "—"}</span>
                 <button
-                  className="bg-gray-200 px-4 py-1 rounded-lg flex items-center gap-2 hover:bg-gray-300"
+                  className="bg-gray-200 px-3 py-1 rounded-lg text-sm hover:bg-gray-300 shrink-0"
                   onClick={handleEditEmail}
                 >
                   Edit ✎
@@ -222,13 +222,13 @@ const Profile: React.FC = () => {
               </div>
 
               {/* Password */}
-              <div className="flex justify-between items-center">
-                <span className="font-semibold bg-gray-200 px-4 py-2 rounded-lg w-32 text-center">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold bg-gray-200 px-3 py-2 rounded-lg w-24 text-center text-sm shrink-0">
                   Password
                 </span>
-                <span>********</span>
+                <span className="flex-1 text-sm">********</span>
                 <button
-                  className="bg-gray-200 px-4 py-1 rounded-lg flex items-center gap-2 hover:bg-gray-300"
+                  className="bg-gray-200 px-3 py-1 rounded-lg text-sm hover:bg-gray-300 shrink-0"
                   onClick={handleEditPassword}
                 >
                   Edit ✎
@@ -236,17 +236,15 @@ const Profile: React.FC = () => {
               </div>
 
               {/* Birthday */}
-              <div className="flex justify-between items-center">
-                <span className="font-semibold bg-gray-200 px-4 py-2 rounded-lg w-32 text-center">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold bg-gray-200 px-3 py-2 rounded-lg w-24 text-center text-sm shrink-0">
                   Birthday
                 </span>
-                <span>
-                  {profile.birthday
-                    ? profile.birthday
-                    : "Not set"}
+                <span className="flex-1 text-sm">
+                  {profile.birthday ? profile.birthday : "Not set"}
                 </span>
                 <button
-                  className="bg-gray-200 px-4 py-1 rounded-lg flex items-center gap-2 hover:bg-gray-300"
+                  className="bg-gray-200 px-3 py-1 rounded-lg text-sm hover:bg-gray-300 shrink-0"
                   onClick={handleEditBirthday}
                 >
                   Edit ✎
@@ -254,11 +252,11 @@ const Profile: React.FC = () => {
               </div>
 
               {/* Join Date */}
-              <div className="flex justify-between items-center">
-                <span className="font-semibold bg-gray-200 px-4 py-2 rounded-lg w-32 text-center">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold bg-gray-200 px-3 py-2 rounded-lg w-24 text-center text-sm shrink-0">
                   Join Date
                 </span>
-                <span>{formatDateForUI(joinDateISO)}</span>
+                <span className="flex-1 text-sm">{formatDateForUI(joinDateISO)}</span>
               </div>
               <div className="flex justify-end">
                 <LogoutButton />

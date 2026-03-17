@@ -85,7 +85,7 @@ const NewTaskModal: React.FC<Props> = ({ onClose, onCreate }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <form onSubmit={onSubmit} className="relative bg-white rounded-xl p-6 w-full max-w-lg shadow-lg">
+      <form onSubmit={onSubmit} className="relative bg-white rounded-xl p-5 w-full max-w-lg mx-4 sm:mx-0 shadow-lg max-h-[90vh] overflow-y-auto">
         <h3 className="text-lg font-bold mb-4">New Task</h3>
         <label className="block mb-2 text-sm">Title</label>
         <input value={name} onChange={e => setName(e.target.value)} className="w-full px-3 py-2 border rounded mb-3" required />
@@ -103,11 +103,11 @@ const NewTaskModal: React.FC<Props> = ({ onClose, onCreate }) => {
 
         <div className="mt-3">
           <label className="block mb-2 text-sm">Recurrence</label>
-          <div className="flex gap-2 mb-2">
-            <button type="button" onClick={() => setRecurrenceType('one-time')} className={`px-2 py-1 rounded ${recurrenceType==='one-time'?'bg-amber-200':''}`}>One-time</button>
-            <button type="button" onClick={() => setRecurrenceType('daily')} className={`px-2 py-1 rounded ${recurrenceType==='daily'?'bg-amber-200':''}`}>Daily</button>
-            <button type="button" onClick={() => setRecurrenceType('every_n_days')} className={`px-2 py-1 rounded ${recurrenceType==='every_n_days'?'bg-amber-200':''}`}>Every N days</button>
-            <button type="button" onClick={() => setRecurrenceType('weekly')} className={`px-2 py-1 rounded ${recurrenceType==='weekly'?'bg-amber-200':''}`}>Weekly</button>
+          <div className="flex flex-wrap gap-2 mb-2">
+            <button type="button" onClick={() => setRecurrenceType('one-time')} className={`px-2 py-1 rounded text-sm ${recurrenceType==='one-time'?'bg-amber-200':''}`}>One-time</button>
+            <button type="button" onClick={() => setRecurrenceType('daily')} className={`px-2 py-1 rounded text-sm ${recurrenceType==='daily'?'bg-amber-200':''}`}>Daily</button>
+            <button type="button" onClick={() => setRecurrenceType('every_n_days')} className={`px-2 py-1 rounded text-sm ${recurrenceType==='every_n_days'?'bg-amber-200':''}`}>Every N days</button>
+            <button type="button" onClick={() => setRecurrenceType('weekly')} className={`px-2 py-1 rounded text-sm ${recurrenceType==='weekly'?'bg-amber-200':''}`}>Weekly</button>
           </div>
 
           {(recurrenceType === 'daily' || recurrenceType === 'every_n_days') && (

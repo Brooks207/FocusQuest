@@ -94,24 +94,24 @@ export default function CalendarComponent() {
 
   return (
     <section className="min-h-screen w-full bg-gradient-to-br from-green-200 to-amber-400 py-16 px-4">
-      <div className="container mx-auto max-w-5xl bg-white/70 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
-        <div className="flex items-center justify-between mb-3">
-          <h1 className="text-2xl font-semibold">Calendar</h1>
-          <div className="flex gap-2">
-            <button onClick={fetchEvents} className="px-3 py-1 rounded-lg bg-amber-100 text-amber-900 hover:bg-amber-200 text-sm font-medium">↺ Refresh</button>
-            <button onClick={deleteAllTasks} className="px-3 py-1 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium">🗑 Delete All</button>
+      <div className="container mx-auto max-w-5xl bg-white/70 backdrop-blur-sm rounded-2xl p-4 sm:p-8 shadow-lg">
+        <div className="flex items-center justify-between mb-3 gap-2">
+          <h1 className="text-xl sm:text-2xl font-semibold">Calendar</h1>
+          <div className="flex gap-2 shrink-0">
+            <button onClick={fetchEvents} className="px-3 py-1 rounded-lg bg-amber-100 text-amber-900 hover:bg-amber-200 text-sm font-medium">↺</button>
+            <button onClick={deleteAllTasks} className="px-3 py-1 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 text-sm font-medium">🗑</button>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-sm mb-4">
+        <div className="flex flex-wrap items-center gap-1.5 text-sm mb-4">
           <span className="text-sm text-gray-600">Legend:</span>
-          <span className="px-2 py-1 rounded text-white" style={{ backgroundColor: DIFFICULTY_COLORS[1] }}>Easy</span>
-          <span className="px-2 py-1 rounded text-white" style={{ backgroundColor: DIFFICULTY_COLORS[2] }}>Medium</span>
-          <span className="px-2 py-1 rounded text-white" style={{ backgroundColor: DIFFICULTY_COLORS[3] }}>Hard</span>
-          <span className="px-2 py-1 rounded text-white" style={{ backgroundColor: DIFFICULTY_COLORS[4] }}>Very Hard</span>
+          <span className="px-2 py-0.5 rounded text-white text-xs" style={{ backgroundColor: DIFFICULTY_COLORS[1] }}>Easy</span>
+          <span className="px-2 py-0.5 rounded text-white text-xs" style={{ backgroundColor: DIFFICULTY_COLORS[2] }}>Medium</span>
+          <span className="px-2 py-0.5 rounded text-white text-xs" style={{ backgroundColor: DIFFICULTY_COLORS[3] }}>Hard</span>
+          <span className="px-2 py-0.5 rounded text-white text-xs" style={{ backgroundColor: DIFFICULTY_COLORS[4] }}>Very Hard</span>
         </div>
 
         {/* Calendar wrapper */}
-        <div className="h-[70vh] fq-calendar"> 
+        <div className="h-[60vh] sm:h-[70vh] fq-calendar">
           <Calendar
             localizer={localizer}
             events={events}
