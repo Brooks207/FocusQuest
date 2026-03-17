@@ -79,47 +79,110 @@ const MonsterBattle: React.FC<{
   ];
 
   return (
-    <div className="relative bg-gradient-to-r from-green-100 to-green-200 p-4 rounded-xl border border-green-300 space-y-3">
-      {/* Enemy HP Bar */}
-      <div className="flex items-center justify-between">
-        <div className="text-sm font-semibold text-gray-700">Enemy HP</div>
-        <div className="text-xs text-gray-600 font-mono">{hp}/{maxHP}</div>
-      </div>
-      <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-        <div className="h-full bg-green-500 transition-all duration-500" style={{ width: `${pct}%` }} />
-      </div>
+    <div className="relative bg-gradient-to-br from-green-100 via-emerald-100 to-amber-100 p-4 rounded-2xl border border-green-300 space-y-3 shadow-lg overflow-hidden">
 
-      {/* Battle field */}
-      <div className="relative flex justify-between items-center bg-cyan-200 rounded-xl p-3">
-        <span className="text-4xl">🧍‍♂️</span>
-        {lastCounterDmg != null && lastCounterDmg > 0 && (
-          <span className="absolute left-6 -top-3 text-xs font-bold text-red-600 animate-bounce">
-            -{lastCounterDmg} HP
-          </span>
-        )}
-        <span className="text-5xl">👹</span>
-      </div>
-
-      <div className="flex items-center justify-between text-sm text-gray-700">
-        <span>Enemy Lv.{enemyLevel} · hits back <b>{counterHit}</b> HP/task</span>
-        <span className="flex items-center gap-1">🎁 <b className="truncate max-w-[120px]">{reward}</b></span>
-      </div>
-
-      {/* Combat rules table */}
-      <div className="bg-white/60 rounded-xl p-3">
-        <div className="text-xs font-semibold text-gray-500 mb-2">Combat Rules</div>
-        <div className="grid grid-cols-3 text-xs text-gray-500 font-semibold mb-1 px-1">
-          <span>Difficulty</span>
-          <span className="text-center text-green-700">You deal</span>
-          <span className="text-center text-red-600">Enemy hits</span>
-        </div>
-        {rows.map(r => (
-          <div key={r.diff} className="grid grid-cols-3 text-xs py-0.5 px-1 rounded hover:bg-white/60">
-            <span className="font-semibold" style={{ color: r.color }}>{r.diff}</span>
-            <span className="text-center font-bold text-green-700">+{r.playerDmg} dmg</span>
-            <span className="text-center font-bold text-red-600">-{counterHit} HP</span>
+      {/* Enemy HP bar — game-style */}
+      <div className="space-y-1">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <span className="text-base leading-none">👹</span>
+            <span className="font-fantasy text-sm font-bold text-gray-800 tracking-wide">
+              Lv.{enemyLevel} Shadow Fiend
+            </span>
+            {pct < 25 && <span className="text-base leading-none animate-pulse">💀</span>}
           </div>
+          <span className="font-mono text-xs font-bold text-red-700 bg-red-100 px-2 py-0.5 rounded-full">
+            {hp}/{maxHP}
+          </span>
+        </div>
+        <div className="h-4 bg-gray-300/70 rounded-full overflow-hidden shadow-inner">
+          <div
+            className="h-full rounded-full transition-all duration-700 bg-gradient-to-r from-red-500 to-red-400 shadow-sm"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Battle arena */}
+      <div className="relative flex justify-between items-end bg-gradient-to-b from-cyan-300/60 to-blue-200/60 backdrop-blur-sm rounded-2xl px-5 py-4 border border-cyan-300/50 shadow-inner overflow-visible">
+        {/* Ground line */}
+        <div className="absolute bottom-3 left-4 right-4 h-px bg-cyan-400/40 rounded-full" />
+
+        {/* Player */}
+        <div className="relative flex flex-col items-center gap-0.5">
+          {lastCounterDmg != null && lastCounterDmg > 0 && (
+            <span
+              className="absolute -top-7 left-1/2 -translate-x-1/2 text-sm font-black text-red-600 drop-shadow-md whitespace-nowrap animate-slide-down"
+              style={{ animation: 'floatUp 1s ease-out forwards' }}
+            >
+              -{lastCounterDmg} HP!
+            </span>
+          )}
+          <span className="text-5xl leading-none drop-shadow-md">🧍‍♂️</span>
+          <span className="text-[9px] font-pixel text-cyan-800 leading-none">YOU</span>
+        </div>
+
+        {/* VS badge */}
+        <div className="flex flex-col items-center justify-center z-10">
+          <span className="font-fantasy text-base font-black text-white bg-gradient-to-br from-amber-400 to-orange-500 rounded-full w-9 h-9 flex items-center justify-center shadow-lg border-2 border-white/60 leading-none">
+            VS
+          </span>
+        </div>
+
+        {/* Enemy */}
+        <div className="flex flex-col items-center gap-0.5">
+          <span className={`text-5xl leading-none drop-shadow-md ${pct < 25 ? 'animate-pulse' : ''}`}>👹</span>
+          <span className="text-[9px] font-pixel text-cyan-800 leading-none">ENEMY</span>
+        </div>
+      </div>
+
+      {/* Reward pills */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-xs font-semibold text-gray-500 shrink-0">Drops:</span>
+        {reward.split(',').map((item, i) => (
+          <span
+            key={i}
+            className="inline-flex items-center gap-1 bg-amber-100 border border-amber-300 text-amber-800 text-xs font-semibold px-2 py-0.5 rounded-full shadow-sm"
+          >
+            🎁 {item.trim()}
+          </span>
         ))}
+      </div>
+
+      {/* Combat rules */}
+      <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-3 space-y-2 border border-white/80 shadow-sm">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-1">
+          <span className="font-fantasy text-xs font-bold text-gray-700 tracking-wide">⚔️ Combat Rules</span>
+          <span className="text-[10px] text-gray-400 italic">Defense reduces incoming dmg</span>
+        </div>
+
+        {/* Column labels */}
+        <div className="grid grid-cols-3 text-[10px] font-bold text-gray-400 uppercase tracking-wide px-1 mb-0.5">
+          <span>Difficulty</span>
+          <span className="text-center text-green-700">⚔️ You deal</span>
+          <span className="text-center text-red-600">💥 Enemy hits</span>
+        </div>
+
+        {/* Rows as cards */}
+        <div className="space-y-1.5">
+          {rows.map(r => (
+            <div
+              key={r.diff}
+              className="grid grid-cols-3 items-center bg-white/80 rounded-xl px-2 py-1.5 border border-gray-100 shadow-sm"
+            >
+              <span className="text-xs font-black leading-none" style={{ color: r.color }}>
+                {r.diff}
+              </span>
+              <span className="text-center text-xs font-black text-green-700 bg-green-50 rounded-lg py-0.5 mx-1">
+                +{r.playerDmg}
+              </span>
+              <span className="text-center text-xs font-black text-red-600 bg-red-50 rounded-lg py-0.5 mx-1">
+                -{counterHit}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
