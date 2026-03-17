@@ -22,11 +22,16 @@ interface Quest {
 
 // mapping difficulty -> xp/dmg (used locally to decide awards)
 const DIFFICULTY_MAP: Record<number, { xp: number; dmg: number; gold: number }> = {
-  1: { xp: 8, dmg: 10, gold: 5 },
+  1: { xp: 8,  dmg: 10, gold: 5  },
   2: { xp: 15, dmg: 18, gold: 12 },
   3: { xp: 28, dmg: 32, gold: 25 },
   4: { xp: 45, dmg: 50, gold: 45 },
 }
+
+// Enemy counter-attack: hits player for (enemyLevel × BASE) − defense, min 1
+// Missed-task penalty per task:  same formula × difficulty multiplier
+const ENEMY_COUNTER_BASE = 4   // HP lost per enemy level on task completion
+const MISSED_PENALTY_BASE = 6  // HP lost per enemy level per missed task (scaled by difficulty)
 
 const DIFFICULTY_COLORS: Record<number, string> = {
   1: '#10B981',
@@ -56,29 +61,65 @@ const StatChip: React.FC<{ label: string; value: string | number }> = ({ label, 
 );
 
 // --- Battle ---
-const MonsterBattle: React.FC<{ maxHP: number; hp: number; reward: string; xp:number}>
-= ({ maxHP, hp, reward }) => {
+const MonsterBattle: React.FC<{
+  maxHP: number; hp: number; reward: string; xp: number;
+  enemyLevel: number; playerAttack: number; baseAttack: number; defense: number;
+  lastCounterDmg?: number | null;
+}>
+= ({ maxHP, hp, reward, enemyLevel, playerAttack, baseAttack, defense, lastCounterDmg }) => {
   const pct = Math.max(0, Math.min(100, (hp / maxHP) * 100));
 
+  // pre-compute displayed damage values
+  const counterHit = Math.max(1, enemyLevel * ENEMY_COUNTER_BASE - defense);
+  const rows = [
+    { diff: 'Easy',      color: '#10B981', playerDmg: Math.round(10 * playerAttack / baseAttack) },
+    { diff: 'Medium',    color: '#F59E0B', playerDmg: Math.round(18 * playerAttack / baseAttack) },
+    { diff: 'Hard',      color: '#F97316', playerDmg: Math.round(32 * playerAttack / baseAttack) },
+    { diff: 'Very Hard', color: '#EF4444', playerDmg: Math.round(50 * playerAttack / baseAttack) },
+  ];
+
   return (
-    <div className="relative bg-gradient-to-r from-green-100 to-green-200 p-4 rounded-xl border border-green-300">
+    <div className="relative bg-gradient-to-r from-green-100 to-green-200 p-4 rounded-xl border border-green-300 space-y-3">
       {/* Enemy HP Bar */}
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between">
         <div className="text-sm font-semibold text-gray-700">Enemy HP</div>
         <div className="text-xs text-gray-600 font-mono">{hp}/{maxHP}</div>
       </div>
-      <div className="h-3 bg-gray-200 rounded-full overflow-hidden mb-3">
+      <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
         <div className="h-full bg-green-500 transition-all duration-500" style={{ width: `${pct}%` }} />
-      </div>      
+      </div>
 
       {/* Battle field */}
-      <div className="flex justify-between items-center bg-cyan-200 mt-5 rounded-xl p-3">
+      <div className="relative flex justify-between items-center bg-cyan-200 rounded-xl p-3">
         <span className="text-4xl">🧍‍♂️</span>
+        {lastCounterDmg != null && lastCounterDmg > 0 && (
+          <span className="absolute left-6 -top-3 text-xs font-bold text-red-600 animate-bounce">
+            -{lastCounterDmg} HP
+          </span>
+        )}
         <span className="text-5xl">👹</span>
       </div>
-      <div className="flex items-center justify-between mt-3 text-sm text-gray-700">
-        <span>Complete dailies to deal damage!</span>
-        <span className="flex items-center gap-1"><span>🎁</span><b>{reward}</b></span>
+
+      <div className="flex items-center justify-between text-sm text-gray-700">
+        <span>Enemy Lv.{enemyLevel} · hits back <b>{counterHit}</b> HP/task</span>
+        <span className="flex items-center gap-1">🎁 <b className="truncate max-w-[120px]">{reward}</b></span>
+      </div>
+
+      {/* Combat rules table */}
+      <div className="bg-white/60 rounded-xl p-3">
+        <div className="text-xs font-semibold text-gray-500 mb-2">Combat Rules</div>
+        <div className="grid grid-cols-3 text-xs text-gray-500 font-semibold mb-1 px-1">
+          <span>Difficulty</span>
+          <span className="text-center text-green-700">You deal</span>
+          <span className="text-center text-red-600">Enemy hits</span>
+        </div>
+        {rows.map(r => (
+          <div key={r.diff} className="grid grid-cols-3 text-xs py-0.5 px-1 rounded hover:bg-white/60">
+            <span className="font-semibold" style={{ color: r.color }}>{r.diff}</span>
+            <span className="text-center font-bold text-green-700">+{r.playerDmg} dmg</span>
+            <span className="text-center font-bold text-red-600">-{counterHit} HP</span>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -213,6 +254,7 @@ const DailyQuestPage: React.FC = () => {
 
   const [playerHP, setPlayerHP] = useState<number>(100)
   const [equippedBonuses, setEquippedBonuses] = useState({ attack_bonus: 0, defense_bonus: 0 })
+  const [lastCounterDmg, setLastCounterDmg] = useState<number | null>(null)
   const [enemies, setEnemies] = useState<Enemy[]>([])
   const [enemyRound, setEnemyRound] = useState<number>(1)
   const [loot, setLoot] = useState<Array<{ type: string; amount?: number; name?: string }>>([])
@@ -419,11 +461,14 @@ const DailyQuestPage: React.FC = () => {
         if (last === today) return
 
         // compute damage from tasks due today that are not completed
+        // penalty scales with enemy level × difficulty multiplier, reduced by defense
         const missed = tasks.filter(t => isDueOnDate(t.next_due) && !t.completed_at)
+        const enemyLevel = enemiesRef.current?.[0]?.level ?? 1
+        const diffMultiplier: Record<number, number> = { 1: 1, 2: 1.5, 3: 2.5, 4: 4 }
         const totalMissedDamage = missed.reduce((acc, t) => {
           const diff = t.difficulty || 1
-          const d = DIFFICULTY_MAP[diff]?.dmg ?? (t.dmg || 0)
-          return acc + (d || 0)
+          const penalty = Math.max(1, Math.round(enemyLevel * MISSED_PENALTY_BASE * (diffMultiplier[diff] ?? 1)) - defense)
+          return acc + penalty
         }, 0)
         if (totalMissedDamage > 0) {
           // update local HP and persist to DB when user exists
@@ -494,6 +539,19 @@ const DailyQuestPage: React.FC = () => {
         await applyDamageToEnemy(dmg, userId)
       } catch (e) {
         console.error('Failed applying damage to enemy', e)
+      }
+
+      // enemy counter-attacks: scales with enemy level, reduced by defense
+      try {
+        const enemyLevel = enemiesRef.current?.[0]?.level ?? 1
+        const counterDmg = Math.max(1, enemyLevel * ENEMY_COUNTER_BASE - defense)
+        const newHp = Math.max(0, playerHP - counterDmg)
+        setPlayerHP(newHp)
+        setLastCounterDmg(counterDmg)
+        setTimeout(() => setLastCounterDmg(null), 1500)
+        await setPlayerHp(userId, newHp)
+      } catch (e) {
+        console.error('Failed applying counter-attack', e)
       }
 
       // Determine how many times this task has been completed so far (to respect repeats/count)
@@ -630,6 +688,11 @@ const DailyQuestPage: React.FC = () => {
               hp={enemyHP}
               reward={`${currentEnemy?.name ?? 'Enemy'} - Drops: ${currentEnemy?.drops.map(d => d.type === 'gold' ? `💰${d.amount}` : d.type === 'xp' ? `XP${d.amount}` : d.name).join(', ')}`}
               xp={currentEnemy?.drops.find(d => d.type === 'xp')?.amount ?? 0}
+              enemyLevel={currentEnemy?.level ?? 1}
+              playerAttack={playerAttack}
+              baseAttack={BASE_ATTACK}
+              defense={defense}
+              lastCounterDmg={lastCounterDmg}
             />
             {/* Show small loot list */}
             {loot.length > 0 && (
