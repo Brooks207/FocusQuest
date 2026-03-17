@@ -45,7 +45,7 @@ const Home: React.FC = () => {
 
         {/* Buttons (unchanged) */}
         <button
-          onClick={() => navigate('/tasks')}
+          onClick={() => navigate('/daily')}
           className="bg-white text-amber-900 hover:bg-amber-800 hover:text-white transition-all px-8 py-4 rounded-full text-xl font-semibold shadow-lg cursor-pointer"
         >
           Explore the world of Gamified Todos! →

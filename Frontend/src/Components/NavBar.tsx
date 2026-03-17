@@ -34,16 +34,15 @@ const Navbar: React.FC = () => {
 
   const loggedIn = [
     { name: "Home", path: "/" },
-    { name: "Tasks", path: "/tasks" },
-    { name: "About", path: "/about" },
     { name: "Daily Quest", path: "/daily"},
     { name: "Shop", path: "/shop"},
-    { name: "Calendar", path: "/calendar"}
+    { name: "Calendar", path: "/calendar"},
+    { name: "About", path: "/about" },
   ];
   const loggedOut = [
     { name: "Home", path: "/" },
+    { name: "Sign In / Sign Up", path: "/auth"},
     { name: "About", path: "/about" },
-    { name: "Sign In / Sign Up", path: "/auth"}
   ]
   if (currentUser) {
     return (

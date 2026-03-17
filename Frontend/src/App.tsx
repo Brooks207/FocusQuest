@@ -1,7 +1,6 @@
 import './App.css'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Home from './Pages/Home'
-import TaskList from './Pages/TaskList'
 import About from './Pages/About'
 import Navbar from './Components/NavBar'
 import DailyQuestPage from './Pages/DailyQuest'
@@ -22,14 +21,6 @@ function App() {
         <div className="pt-16">
           <Routes>
           <Route path="/" element={<Home/>} />
-          <Route
-          path="/tasks"
-          element={
-            <ProtectedRoute>
-              <TaskList/>
-            </ProtectedRoute>
-          }
-        />
           <Route path='/about' element={<About/>} />
           <Route
           path='/daily'
