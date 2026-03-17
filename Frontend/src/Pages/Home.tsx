@@ -23,11 +23,11 @@ const Home: React.FC = () => {
     <section className="absolute inset-0 flex flex-col justify-center items-center text-center bg-gradient-to-br from-green-200 to-amber-400 overflow-hidden">
       <div className="flex flex-col justify-center items-center gap-y-6 max-w-2xl px-4">
         <h1
-          className={`text-4xl sm:text-6xl text-gray-900 font-extrabold leading-tight ${fontClass}
+          className={`text-[clamp(1.4rem,7vw,3.75rem)] text-gray-900 font-extrabold leading-tight ${fontClass}
                       transition-all duration-300 flex justify-center items-center
-                      h-[1.3em] overflow-hidden`}
+                      w-full h-[2em] overflow-hidden`}
         >
-          <span className="inline-block">{text}</span>
+          <span className="inline-block max-w-full">{text}</span>
           {showCaret && (
             <span
               aria-hidden="true"

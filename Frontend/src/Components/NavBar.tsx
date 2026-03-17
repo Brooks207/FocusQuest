@@ -116,15 +116,15 @@ const Navbar: React.FC = () => {
 
       {/* Mobile dropdown menu */}
       {menuOpen && (
-        <div className="md:hidden bg-white/95 backdrop-blur-sm border-t border-gray-100 px-4 py-3 flex flex-col gap-1">
+        <div className="md:hidden animate-slide-down bg-white border-t border-gray-100 px-4 pb-4 pt-2 flex flex-col gap-1 shadow-lg">
           {links.map((link) => (
             <button
               key={link.name}
               onClick={() => goTo(link.path)}
-              className={`w-full text-left px-3 py-2.5 rounded-lg text-base font-medium transition-all ${
+              className={`w-full text-left px-4 py-3 rounded-xl text-base font-medium transition-all ${
                 location.pathname === link.path
-                  ? "bg-amber-100 text-amber-900"
-                  : "text-gray-700 hover:bg-gray-100"
+                  ? "bg-amber-100 text-amber-900 font-semibold"
+                  : "text-gray-700 hover:bg-gray-50 active:bg-gray-100"
               }`}
             >
               {link.name}
