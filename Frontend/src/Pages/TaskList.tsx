@@ -238,6 +238,9 @@ const TaskList: React.FC = () => {
     }
     setError(null);
 
+    // Remove any completion records first (foreign key constraint)
+    await supabase.from("task_completions").delete().eq("task_id", id);
+
     const { error } = await supabase
       .from("taskitem")
       .delete()
