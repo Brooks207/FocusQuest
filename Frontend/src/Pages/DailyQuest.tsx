@@ -338,6 +338,7 @@ const DailyQuestPage: React.FC = () => {
   const [enemyRound, setEnemyRound] = useState<number>(1)
   const [loot, setLoot] = useState<Array<{ type: string; amount?: number; name?: string }>>([])
   const enemiesRef = useRef<Enemy[]>([])
+  const playerHPRef = useRef<number>(100)
 
   // Helpers for enemy generation
   // deterministic seeded RNG (mulberry32) so enemy generated for (userId, round) is stable until defeat
@@ -415,10 +416,13 @@ const DailyQuestPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // keep a ref in sync so event handlers can read the latest enemies without stale closures
+  // keep refs in sync so event handlers can read the latest values without stale closures
   useEffect(() => {
     enemiesRef.current = enemies
   }, [enemies])
+  useEffect(() => {
+    playerHPRef.current = playerHP
+  }, [playerHP])
 
   // derive player attack and max HP from current level + equipped gear
   const playerAttack = BASE_ATTACK + Math.max(0, currentLevel - 1) * ATTACK_PER_LEVEL + equippedBonuses.attack_bonus
@@ -627,7 +631,7 @@ const DailyQuestPage: React.FC = () => {
       try {
         const enemyLevel = enemiesRef.current?.[0]?.level ?? 1
         const counterDmg = Math.max(1, enemyLevel * ENEMY_COUNTER_BASE - defense)
-        const newHp = Math.max(0, playerHP - counterDmg)
+        const newHp = Math.max(0, playerHPRef.current - counterDmg)
         setPlayerHP(newHp)
         setLastCounterDmg(counterDmg)
         setTimeout(() => setLastCounterDmg(null), 1500)
