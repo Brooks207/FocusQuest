@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { addXp, addCurrency, getXp, getLevelInfo } from '../lib/xp';
+import { addXp, addCurrency, getXp, getCurrency, getLevelInfo } from '../lib/xp';
 import { supabase } from '../lib/supabaseClient';
 import NewTaskModal from '../Components/NewTaskModal';
 import { computeNextDue, isDueOnDate } from '../lib/recurrence'
@@ -63,12 +63,12 @@ const StatChip: React.FC<{ label: string; value: string | number }> = ({ label, 
 // --- Battle ---
 const MonsterBattle: React.FC<{
   maxHP: number; hp: number; reward: string; xp: number;
-  enemyLevel: number; playerAttack: number; baseAttack: number; defense: number;
+  enemyLevel: number;
   lastCounterDmg?: number | null;
   lastPlayerDmg?: number | null;
   attackTick?: number;
 }>
-= ({ maxHP, hp, reward, enemyLevel, playerAttack, baseAttack, defense, lastCounterDmg, lastPlayerDmg, attackTick }) => {
+= ({ maxHP, hp, reward, enemyLevel, lastCounterDmg, lastPlayerDmg, attackTick }) => {
   const pct = Math.max(0, Math.min(100, (hp / maxHP) * 100));
 
   // delay transition so HP bar doesn't animate from 0% on mount/remount
@@ -100,13 +100,6 @@ const MonsterBattle: React.FC<{
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [attackTick]);
 
-  const counterHit = Math.max(1, enemyLevel * ENEMY_COUNTER_BASE - defense);
-  const rows = [
-    { diff: 'Easy',      color: '#10B981', playerDmg: Math.round(10 * playerAttack / baseAttack) },
-    { diff: 'Medium',    color: '#F59E0B', playerDmg: Math.round(18 * playerAttack / baseAttack) },
-    { diff: 'Hard',      color: '#F97316', playerDmg: Math.round(32 * playerAttack / baseAttack) },
-    { diff: 'Very Hard', color: '#EF4444', playerDmg: Math.round(50 * playerAttack / baseAttack) },
-  ];
 
   return (
     <div className="relative bg-gradient-to-br from-green-100 via-emerald-100 to-amber-100 p-4 rounded-2xl border border-green-300 space-y-3 shadow-lg overflow-hidden">
@@ -193,27 +186,6 @@ const MonsterBattle: React.FC<{
         ))}
       </div>
 
-      {/* Combat rules */}
-      <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-3 space-y-2 border border-white/80 shadow-sm">
-        <div className="flex items-center justify-between">
-          <span className="font-fantasy text-xs font-bold text-gray-700 tracking-wide">⚔️ Combat Rules</span>
-          <span className="text-[10px] text-gray-400 italic">Defense reduces incoming dmg</span>
-        </div>
-        <div className="grid grid-cols-3 text-[10px] font-bold text-gray-400 uppercase tracking-wide px-1">
-          <span>Difficulty</span>
-          <span className="text-center text-green-700">⚔️ You deal</span>
-          <span className="text-center text-red-600">💥 Enemy hits</span>
-        </div>
-        <div className="space-y-1.5">
-          {rows.map(r => (
-            <div key={r.diff} className="grid grid-cols-3 items-center bg-white/80 rounded-xl px-2 py-1.5 border border-gray-100 shadow-sm">
-              <span className="text-xs font-black leading-none" style={{ color: r.color }}>{r.diff}</span>
-              <span className="text-center text-xs font-black text-green-700 bg-green-50 rounded-lg py-0.5 mx-1">+{r.playerDmg}</span>
-              <span className="text-center text-xs font-black text-red-600 bg-red-50 rounded-lg py-0.5 mx-1">-{counterHit}</span>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 };
@@ -286,6 +258,7 @@ const QuestToggle: React.FC<{ q: Quest; onToggle?: (id: string) => void; onDelet
 const DailyQuestPage: React.FC = () => {
   // XP fetched from database (displayed as x/100 for now)
   const [userXp, setUserXp] = useState<number>(0)
+  const [userCurrency, setUserCurrency] = useState<number>(0)
   const [profileName, setProfileName] = useState<string>('Adventurer')
 
   // Fetch current user's XP
@@ -294,8 +267,9 @@ const DailyQuestPage: React.FC = () => {
       const { data } = await supabase.auth.getUser()
       if (!data?.user) return
       const userId = data.user.id
-      const xp = await getXp(userId)
+      const [xp, currency] = await Promise.all([getXp(userId), getCurrency(userId)])
       setUserXp(xp)
+      setUserCurrency(currency)
       const { data: prof } = await supabase.from('profiles').select('name').eq('id', userId).single()
       if (prof?.name) setProfileName(prof.name)
     } catch (e) {
@@ -630,6 +604,7 @@ const DailyQuestPage: React.FC = () => {
       try {
         if (typeof gold === 'number' && gold !== 0) {
           await addCurrency(userId, gold)
+          setUserCurrency(prev => prev + gold)
         }
       } catch (e) {
         console.error('Failed to award currency:', e)
@@ -766,6 +741,7 @@ const DailyQuestPage: React.FC = () => {
       playerHPRef.current = 100
       setPlayerHP(100)
       setUserXp(0)
+      setUserCurrency(0)
       setEnemyRound(1)
       setAttackTick(0)
       setLastCounterDmg(null)
@@ -804,30 +780,75 @@ const DailyQuestPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
           {/* Top Left: Character */}
           <Card title="Adventurer">
-            <div className="flex items-center gap-4">
-                <div className="relative">
+            {/* Avatar + name row */}
+            <div className="flex items-center gap-4 mb-4">
+              <div className="relative shrink-0">
                 <div className="size-20 md:size-24 rounded-2xl bg-amber-200/80 border border-amber-300 shadow-inner grid place-content-center text-3xl">🛡️</div>
                 <span className="absolute -bottom-2 -right-2 px-2 py-0.5 text-xs rounded-full bg-emerald-600 text-white shadow">Lv {currentLevel}</span>
               </div>
-              <div className="flex-1">
-                <div className="font-semibold text-gray-800 text-lg">{profileName}</div>
-                <div className="mt-3 grid grid-cols-3 gap-1.5">
-                  <StatChip label="ATK" value={`${playerAttack}`} />
-                  <StatChip label="HP" value={`${playerHP}/${playerMaxHP}`} />
-                  <StatChip label="DEF" value={defense} />
+              <div className="flex-1 min-w-0">
+                <div className="font-bold text-gray-800 text-lg truncate">{profileName}</div>
+                <div className="mt-2 grid grid-cols-2 gap-1.5">
+                  <StatChip label="⚔️ ATK" value={`${playerAttack}`} />
+                  <StatChip label="🛡️ DEF" value={defense} />
+                  <StatChip label="💰 Gold" value={`${userCurrency}`} />
+                  <StatChip label="🗡️ Round" value={`${enemyRound}`} />
                 </div>
-                <div className="mt-3">
-                  <div className="text-xs text-gray-600 mb-1">XP</div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-emerald-500 transition-all duration-300"
-                        style={{ width: `${Math.min(100, pctToNext)}%` }}
-                      />
-                    </div>
-                    <div className="text-xs font-semibold text-gray-800 shrink-0">{xpIntoLevel}/{xpNeededForNext}</div>
+              </div>
+            </div>
+
+            {/* HP bar */}
+            <div className="mb-3">
+              <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                <span className="font-semibold">❤️ HP</span>
+                <span className="font-semibold text-gray-800">{playerHP} / {playerMaxHP}</span>
+              </div>
+              <div className="h-3 bg-gray-200 rounded-full overflow-hidden shadow-inner">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-red-500 to-red-400 transition-all duration-300"
+                  style={{ width: `${Math.max(0, Math.min(100, (playerHP / playerMaxHP) * 100))}%` }}
+                />
+              </div>
+            </div>
+
+            {/* XP bar */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                <span className="font-semibold">✨ XP</span>
+                <span className="font-semibold text-gray-800">{xpIntoLevel} / {xpNeededForNext}</span>
+              </div>
+              <div className="h-3 bg-gray-200 rounded-full overflow-hidden shadow-inner">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-300"
+                  style={{ width: `${Math.min(100, pctToNext)}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Combat preview */}
+            <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-3 space-y-2 border border-white/80 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="font-fantasy text-xs font-bold text-gray-700 tracking-wide">⚔️ Combat Preview</span>
+                <span className="text-[10px] text-gray-400 italic">DEF reduces incoming dmg</span>
+              </div>
+              <div className="grid grid-cols-3 text-[10px] font-bold text-gray-400 uppercase tracking-wide px-1">
+                <span>Difficulty</span>
+                <span className="text-center text-green-700">You deal</span>
+                <span className="text-center text-red-600">Enemy hits</span>
+              </div>
+              <div className="space-y-1.5">
+                {([
+                  { diff: 'Easy',      color: '#10B981', playerDmg: Math.round(10 * playerAttack / BASE_ATTACK) },
+                  { diff: 'Medium',    color: '#F59E0B', playerDmg: Math.round(18 * playerAttack / BASE_ATTACK) },
+                  { diff: 'Hard',      color: '#F97316', playerDmg: Math.round(32 * playerAttack / BASE_ATTACK) },
+                  { diff: 'Very Hard', color: '#EF4444', playerDmg: Math.round(50 * playerAttack / BASE_ATTACK) },
+                ] as const).map(r => (
+                  <div key={r.diff} className="grid grid-cols-3 items-center bg-white/80 rounded-xl px-2 py-1.5 border border-gray-100 shadow-sm">
+                    <span className="text-xs font-black leading-none" style={{ color: r.color }}>{r.diff}</span>
+                    <span className="text-center text-xs font-black text-green-700 bg-green-50 rounded-lg py-0.5 mx-1">+{r.playerDmg}</span>
+                    <span className="text-center text-xs font-black text-red-600 bg-red-50 rounded-lg py-0.5 mx-1">-{Math.max(1, (currentEnemy?.level ?? 1) * ENEMY_COUNTER_BASE - defense)}</span>
                   </div>
-                </div>
+                ))}
               </div>
             </div>
           </Card>
@@ -841,9 +862,6 @@ const DailyQuestPage: React.FC = () => {
               reward={`${currentEnemy?.name ?? 'Enemy'} - Drops: ${currentEnemy?.drops.map(d => d.type === 'gold' ? `💰${d.amount}` : d.type === 'xp' ? `XP${d.amount}` : d.name).join(', ')}`}
               xp={currentEnemy?.drops.find(d => d.type === 'xp')?.amount ?? 0}
               enemyLevel={currentEnemy?.level ?? 1}
-              playerAttack={playerAttack}
-              baseAttack={BASE_ATTACK}
-              defense={defense}
               lastCounterDmg={lastCounterDmg}
               lastPlayerDmg={lastPlayerDmg}
               attackTick={attackTick}
