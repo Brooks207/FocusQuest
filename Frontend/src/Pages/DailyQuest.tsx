@@ -757,8 +757,11 @@ const DailyQuestPage: React.FC = () => {
         supabase.from('player_stats').update({ player_hp: 100, last_enemy_round: 1, enemies_defeated: 0, current_enemy_hp: null }).eq('user_id', userId),
       ])
 
-      localStorage.removeItem('lastEnemyAttackDate')
+      // Keep the daily-attack guard so the missed-task effect doesn't fire during reset
+      localStorage.setItem('lastEnemyAttackDate', new Date().toISOString().slice(0, 10))
 
+      // Prevent the level-scaling effect from overwriting the reset HP when level drops to 1
+      prevLevelRef.current = 1
       // reset all local state
       playerHPRef.current = 100
       setPlayerHP(100)
