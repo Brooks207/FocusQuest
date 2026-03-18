@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
+import { getLevelInfo } from "../lib/xp";
 
 type ProfileRow = {
   id: string;
   name?: string | null;
   level?: string | null;
+  xp?: number | null;
   birthday?: string | null;
   avatar?: string | null;
 };
@@ -25,7 +27,7 @@ const Profile: React.FC = () => {
       if (error || !user) { navigate("/auth"); return; }
       setAuthEmail(user.email ?? "");
       setJoinDateISO(user.created_at ?? "");
-      const { data } = await supabase.from("profiles").select("id, name, level, birthday, avatar").eq("id", user.id).single();
+      const { data } = await supabase.from("profiles").select("id, name, level, xp, birthday, avatar").eq("id", user.id).single();
       if (data) setProfile(data as ProfileRow);
       setLoading(false);
     })();
@@ -34,7 +36,7 @@ const Profile: React.FC = () => {
   const refreshProfile = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const { data } = await supabase.from("profiles").select("id, name, level, birthday, avatar").eq("id", user.id).single();
+    const { data } = await supabase.from("profiles").select("id, name, level, xp, birthday, avatar").eq("id", user.id).single();
     if (data) setProfile(data as ProfileRow);
   };
 
@@ -123,7 +125,7 @@ const Profile: React.FC = () => {
                 <div className="text-center">
                   <h2 className="text-2xl font-bold leading-tight">{profile.name ?? "Adventurer"}</h2>
                   <span className="inline-block mt-1 bg-white/25 text-white text-xs font-semibold px-3 py-0.5 rounded-full">
-                    Level {profile.level ?? 1}
+                    Level {getLevelInfo(profile.xp ?? 0).level}
                   </span>
                 </div>
               </div>
